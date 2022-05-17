@@ -1,76 +1,67 @@
 using Bhaptics.Tact;
 using Bhaptics.Tact.Unity;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Vest : MonoBehaviour, ISkinListener
 {
     private IHaptic _player;
+    private Motors _topMotors;
+    private readonly int _nbMotorH = 4;
+    private readonly int _nbMotorV = 2;
+
+    public bool gaussianConvolution = true;
+    [Range(0, 1000)] public float rayGaussian = 60;
+    [Range(0, 1000)] public float rayUniformAverage = 60;
+
+    public bool recomputeBufffer = false;
+
 
     // Start is called before the first frame update
     void Start()
     {
         _player = BhapticsManager.GetHaptic();
-        SkinProcessor.Instance.Register(this);   }
+        SkinProcessor.Instance.Register(this);
+
+        _topMotors = new Motors(SkinProcessor.Instance.ProcessedBufferCol, SkinProcessor.Instance.ProcessedBufferRow, 2, 4);
+    }
 
     // Update is called once per frame
+    int counter = 0;
     void Update()
     {
+        if (counter++ > 20 && recomputeBufffer)
+        {
+            _topMotors.RayGaussian = rayGaussian;
+            _topMotors.RayUniformAverage = rayUniformAverage;
+            _topMotors.ComputeGaussianConvolBuffers();
+            _topMotors.ComputeUniformAverageConvolBuffers();
+            counter = 0;
+        }
 
     }
 
-    public void BufferUpdate(float[,] buffer)
+    public void BufferUpdate()
     {
+        _topMotors.InputBuffer = SkinProcessor.Instance.ProcessedBuffer;
+
+        if(gaussianConvolution)
+            _topMotors.CalculateGaussianOutput();
+        else
+            _topMotors.CalculateUniformAverageOutput();
+
+        float[,] motorIntensityBuffer = MUtils.OneDToTwoD(_topMotors.OutputBuffer, _nbMotorV, _nbMotorH);
+
         List<DotPoint> points = new List<DotPoint>();
 
-        int nbMotorH = 4;
-        int nbMotorV = 4;
-
-        float[,] averageBuffer = SpatialAverage(buffer, nbMotorV, nbMotorH);
-
-        for (int i = 0; i < nbMotorV; i++)
-        {
-            for (int j = 0; j < nbMotorH; j++)
-                points.Add(new DotPoint(i * nbMotorH + j, (int)averageBuffer[i, j]));
-        }
+        for (int i = 0; i < _nbMotorV; i++)
+            for (int j = 0; j < _nbMotorH; j++)
+                points.Add(new DotPoint((_nbMotorV - 1 - i) * _nbMotorH + j, (int)(motorIntensityBuffer[i, j]/256f*100f)));
+        
 
         _player.Submit("_", PositionType.VestBack, points, 100);
 
     }
 
-    private float[,] SpatialAverage(float[,] buffer, int nbMotorV, int nbMotorH)
-    {
-        float[,] averageBufferH = new float[buffer.GetLength(0), nbMotorH];
-
-        for (int i = 0; i < buffer.GetLength(0); i++) //Horizontal
-        {
-            for (int j = 0; j < nbMotorH; j++)
-            {
-                float sum = 0;
-                int dotByMotorH = buffer.GetLength(1) / nbMotorH;
-                for (int k = 0; k < dotByMotorH; k++)
-                    sum += buffer[i, dotByMotorH * j + k];
-
-                averageBufferH[i, j] = sum / dotByMotorH;
-            }
-        }
-
-        float[,] averageBuffer = new float[nbMotorV, nbMotorH];
-
-        for (int j = 0; j < nbMotorH; j++) //Vertical
-        {
-            for (int i = 0; i < nbMotorV; i++)
-            {
-                float sum = 0;
-                int dotByMotorV = buffer.GetLength(0) / nbMotorV;
-                for (int k = 0; k < dotByMotorV; k++)
-                    sum += averageBufferH[i * dotByMotorV + k, j];
-
-                averageBuffer[i, j] = sum / dotByMotorV;
-            }
-        }
-
-        return averageBuffer;
-    }
+  
 }

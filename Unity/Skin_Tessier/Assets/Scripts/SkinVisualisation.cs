@@ -4,35 +4,41 @@ using UnityEngine;
 
 public class SkinVisualisation : MonoBehaviour, ISkinListener
 {
-    float[,] _buffer = new float[12,21];
+    float[,] _buffer;
+    Texture2D texture;
+
 
     // Start is called before the first frame update
     void Start()
     {
         SkinProcessor.Instance.Register(this);
-
-        
+        _buffer = new float[SkinProcessor.Instance.ProcessedBufferCol, SkinProcessor.Instance.ProcessedBufferRow];
+        texture = new Texture2D(SkinProcessor.Instance.ProcessedBufferCol, SkinProcessor.Instance.ProcessedBufferRow);
+        GetComponent<Renderer>().material.mainTexture = texture;
     }
 
     // Update is called once per frame
     void Update()
     {
-        Texture2D texture = new Texture2D(12, 21);
-        GetComponent<Renderer>().material.mainTexture = texture;
+        
 
         for (int y = 0; y < texture.height; y++)
         {
             for (int x = 0; x < texture.width; x++)
             {
-                Color color = new Color(_buffer[x, y], _buffer[x, y], _buffer[x, y]);
-                texture.SetPixel(x, y, color);
+                float v = _buffer[x, y] / 256f;
+                Color color = new Color(v, v, v);
+                texture.SetPixel(texture.width -  x, y, color);
             }
         }
+       
         texture.Apply();
+
+
     }
 
-    public void BufferUpdate(float[,] buffer)
+    public void BufferUpdate()
     {
-        _buffer = buffer;
+        _buffer = SkinProcessor.Instance.ProcessedBuffer2d;
     }
 }

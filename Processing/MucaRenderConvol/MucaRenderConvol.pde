@@ -81,7 +81,7 @@ void setup () {
 
   List<String> fileData = new ArrayList<String>();
   try {
-    fileData = Files.readAllLines(Paths.get("D:\\Users\\aLocks\\Desktop\\UT\\MucaRendererReader\\Log_5 _11\\10-31-53.hx"));
+    fileData = Files.readAllLines(Paths.get("C:/Users/HMI/Desktop/Skin/UT_skin/Processing/MucaRenderConvol/Log_5_17/9-53-3.hx"));
   }
   catch(IOException e) {
     println(e);
