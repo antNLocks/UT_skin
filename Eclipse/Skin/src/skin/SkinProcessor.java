@@ -1,66 +1,72 @@
 package skin;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class SkinProcessor
 {
-    public static SkinProcessor Instance;
 
     private SkinSerialPort _skinPort;
     private List<ISkinListener> _skinListeners = new ArrayList<ISkinListener>();
 
-    private  int _resizeFactor = 30;
-
-    public float noise_interpolation_factor = 0.5f;
-    public int minThreshold = 90;
-    public int maxThreshold = 255;
+    private  int _resizeFactor = 20;
 
 
+    public int Noise_averageAlgo = 1; //0 : rolling average  |  1 : interpolation with previous frames
+	public int Noise_framesForAverage = 3;
+    public float Noise_interpolationFactor = 0.5f;
+    public int MinThreshold = 90;
+    public int MaxThreshold = 255;
+    
 
+    //Public access because I want to be close to the C# version which has { get; private set; }
     public int[] RawBuffer;
     public int RawBufferCol = 12;
     public int RawBufferRow = 21;
     public int[][] RawBuffer2d;
 
     public float[] ProcessedBuffer;
-    public int ProcessedBufferCol;
-    public int ProcessedBufferRow;
+    public int ProcessedBufferCol = RawBufferCol * _resizeFactor;
+    public int ProcessedBufferRow = RawBufferRow * _resizeFactor;
     public float[][] ProcessedBuffer2d;
 
 
-
-    private void Awake()
+   
+    
+    public SkinProcessor(int COM_index)
     {
-        if (Instance != null)
-        {
-            return;
-        }
-
-        Instance = this;
-
-
-        ProcessedBufferCol = (RawBufferCol - 1) * _resizeFactor + 1;
-        ProcessedBufferRow = (RawBufferRow - 1) * _resizeFactor + 1;
+    	_skinPort = new SkinSerialPort(this, COM_index, RawBufferCol*RawBufferRow);
+    }
+    
+    public int getResizeFactor()
+    {
+    	return _resizeFactor;
     }
 
-    // Start is called before the first frame update
-    void Start()
+    public void setResizeFactor(int resizeFactor)
     {
-        _skinPort = new SkinSerialPort(this);
+    	_resizeFactor = resizeFactor;
+    	ProcessedBufferCol = RawBufferCol * _resizeFactor;
+    	ProcessedBufferRow = RawBufferRow * _resizeFactor;
+    }
+
+    
+    public void StartProcessing()
+    {
         _skinPort.StartReading();
-
-       
     }
-
-    void OnApplicationQuit()
+    
+    public void StopProcessing()
     {
         _skinPort.StopReading();
     }
+    
 
     public void Register(ISkinListener skinListener)
     {
-        _skinListeners.Add(skinListener);
+        _skinListeners.add(skinListener);
     }
 
     //Called by _skinSerialPort
@@ -74,78 +80,54 @@ public class SkinProcessor
 
     private void ProcessBuffer(int[] buffer)
     {
-        float[] averageBuffer = AverageBufferOverTime_interpolationPreviousFrames(buffer, noise_interpolation_factor);
-        float[] resizedBuffer = ResizeBufferBilinear(averageBuffer, _resizeFactor, RawBufferCol, RawBufferRow);
-        float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, minThreshold, maxThreshold);
+        float[] averageBuffer = Noise_averageAlgo == 0 ? AverageBufferOverTime_rollingAverage(buffer, Noise_framesForAverage) : AverageBufferOverTime_interpolationPreviousFrames(buffer, Noise_interpolationFactor);
+        float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, _resizeFactor, RawBufferCol, RawBufferRow);
+        float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, MinThreshold, MaxThreshold);
 
         ProcessedBuffer = thresholdMappedBuffer;
         ProcessedBuffer2d = MUtils.OneDToTwoD(ProcessedBuffer, ProcessedBufferCol, ProcessedBufferRow);
 
-        foreach (var skinListener in _skinListeners)
+        for (ISkinListener skinListener : _skinListeners)
             skinListener.BufferUpdate();
 
     }
 
-    private float[] ResizeBufferBilinear(float[] rawBuffer, int resizeFactor, int col, int row)
-    {
-        float[] result = new float[((col - 1) * resizeFactor + 1) * ((row - 1) * resizeFactor + 1)];
+    
 
-        float[][] result2d = MUtils.CreateArray<float>((row - 1) * resizeFactor + 1, (col - 1) * resizeFactor + 1);
+    
+    ArrayDeque<int[]> rawBuffers = new ArrayDeque<int[]>();
+	private float[] AverageBufferOverTime_rollingAverage(int[] actualRawBuffer, int nbFrames) {
+	  float[] result = new float[actualRawBuffer.length];
 
-        float[][] colInter = MUtils.CreateArray<float>(col, (row - 1) * resizeFactor + 1);
+	  rawBuffers.add(actualRawBuffer);
 
-        float[][] rawBuffer2d = MUtils.CreateArray<float>(col, row);
+	  while (rawBuffers.size() > nbFrames)
+	    rawBuffers.poll();
 
-        for (int i = 0; i < col * row; i++)
-            rawBuffer2d[i % col][i / col] = rawBuffer[i];
 
-        for (int i = 0; i < col; i++)
-            colInter[i] = InterLinear(rawBuffer2d[i], resizeFactor);
+	  Iterator<int[]> it = rawBuffers.iterator();
+	  while (it.hasNext()) {
+	    int[] rwB = it.next();
+	    for (int i = 0; i < actualRawBuffer.length; i++)
+	      result[i] += rwB[i] / (float) rawBuffers.size();
+	  }
 
-        float[][] colInterT = MUtils.CreateArray<float>((row - 1) * resizeFactor + 1, col);
-        for (int i = 0; i < colInterT.Length; i++)
-            for (int j = 0; j < colInterT[i].Length; j++)
-                colInterT[i][j] = colInter[j][i];
-
-        for (int i = 0; i < (row - 1) * resizeFactor + 1; i++)
-            result2d[i] = InterLinear(colInterT[i], resizeFactor);
-
-        for (int i = 0; i < result2d.Length; i++)
-            for (int j = 0; j < result2d[i].Length; j++)
-                result[i * result2d[i].Length + j] = result2d[i][j];
-
-        return result;
-    }
-
-    private float[] InterLinear(float[] column, int resizeFactor)
-    {
-        float[] result = new float[(column.Length - 1) * resizeFactor + 1];
-
-        for (int i = 0; i < column.Length - 1; i++)
-            for (int j = 0; j < resizeFactor; j++)
-            {
-                float t = j / (float)resizeFactor;
-                result[i * resizeFactor + j] = (1 - t) * column[i] + t * column[i + 1];
-            }
-
-        result[(column.Length - 1) * resizeFactor] = column[column.Length - 1];
-        return result;
-    }
-
+	  return result;
+	}
     
     private float[] previousRawBuffer = null;
     private float[] AverageBufferOverTime_interpolationPreviousFrames(int[] actualRawBuffer, float k)
     {
-        float[] result = new float[actualRawBuffer.Length];
+		float[] result = new float[actualRawBuffer.length];
 
         if (previousRawBuffer == null)
         {
-            previousRawBuffer = new float[actualRawBuffer.Length];
-            for (int i = 0; i < actualRawBuffer.Length; i++)
+            previousRawBuffer = new float[actualRawBuffer.length];
+            for (int i = 0; i < actualRawBuffer.length; i++)
                 previousRawBuffer[i] = actualRawBuffer[i];
         }
 
-        for (int i = 0; i < actualRawBuffer.Length; i++)
+        for (int i = 0; i < actualRawBuffer.length; i++)
             result[i] = (1 - k) * actualRawBuffer[i] + k * previousRawBuffer[i];
 
         previousRawBuffer = result;
@@ -156,10 +138,10 @@ public class SkinProcessor
 
     private float[] ThresholdMapping(float[] buffer, float min, float max)
     {
-        float[] result = new float[buffer.Length];
+        float[] result = new float[buffer.length];
 
-        for (int i = 0; i < buffer.Length; i++)
-            result[i] = MUtils.Map(Mathf.Clamp(buffer[i], min, max), min, max, 0, 255);
+        for (int i = 0; i < buffer.length; i++)
+            result[i] = MUtils.Map(MUtils.Clamp(buffer[i], min, max), min, max, 0, 255);
 
         return result;
     }

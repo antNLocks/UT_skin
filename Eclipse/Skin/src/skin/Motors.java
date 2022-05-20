@@ -1,130 +1,114 @@
 package skin;
 
-public class Motors {
+public class Motors
+{
 
-  private float[] outputBuffer;
-  private int outputCol, outputRow;
+    public int[] OutputBuffer;
+    private int _outputCol, _outputRow;
 
-  private float[] inputBuffer;
-  private int inputCol, inputRow;
+    public float[] InputBuffer;
+    private int _inputCol , _inputRow;
 
-  private float[][] gaussianConvolBuffers;
-  private float[][] averageConvolBuffers;
+    public float[][] GaussianConvolBuffers;
+    public float[][] UniformAverageConvolBuffers;
+
+
+    public float RayGaussian = 60;
+    public float RayUniformAverage = 60;
 
 
 
-  public Motors(int inputCol, int inputRow, int outputCol, int outputRow) {
-    this.inputCol = inputCol;
-    this.inputRow = inputRow;
-    this.outputCol = outputCol;
-    this.outputRow = outputRow;
+    public Motors(int inputCol, int inputRow, int outputCol, int outputRow)
+    {
+        this._inputCol = inputCol;
+        this._inputRow = inputRow;
+        this._outputCol = outputCol;
+        this._outputRow = outputRow;
 
-    outputBuffer = new float[outputCol*outputRow];
-    computeGaussianConvolBuffers();
-    computeAverageConvolBuffers();
-  }
-
-  private void computeGaussianConvolBuffers() {
-    gaussianConvolBuffers = new float[outputCol*outputRow][inputCol*inputRow];
-
-    for (int i = 0; i < gaussianConvolBuffers.length; i++) {
-      float centerX = (i % outputCol) / (float) outputCol * inputCol + inputCol / (float) outputCol / 2;
-      float centerY = (i / outputCol) / (float) outputRow * inputRow + inputRow / (float) outputRow / 2;
-      gaussianConvolBuffers[i] = gaussBuffer(centerX, centerY, 60);
+        OutputBuffer = new int[outputCol * outputRow];
+        ComputeGaussianConvolBuffers();
+        ComputeUniformAverageConvolBuffers();
     }
-  }
 
-  private float[] gaussBuffer(float centerX, float centerY, float sigma) {
-    float[][] result = new float[inputCol][inputRow];
+    public void ComputeGaussianConvolBuffers()
+    {
+        GaussianConvolBuffers = new float[_outputCol * _outputRow][ _inputCol * _inputRow];
 
-    for (int i = 0; i < result.length; i++)
-      for (int j = 0; j < result[i].length; j++)
-        result[i][j] = (float) (1 / (2*Math.PI*sigma*sigma) * Math.exp(-((i - centerX)*(i - centerX) + (j - centerY)*(j - centerY)) / (2 * sigma * sigma)));
-
-    return twoDToOneD(result);
-  }
-
-  private void computeAverageConvolBuffers() {
-    averageConvolBuffers = new float[outputCol*outputRow][inputCol*inputRow];
-
-    for (int i = 0; i < averageConvolBuffers.length; i++) {
-      float centerX = (i % outputCol) / (float) outputCol * inputCol + inputCol / (float) outputCol / 2;
-      float centerY = (i / outputCol) / (float) outputRow * inputRow + inputRow / (float) outputRow / 2;
-      averageConvolBuffers[i] = averageBuffer(centerX, centerY, 60, 60);
+        for (int i = 0; i < GaussianConvolBuffers.length; i++)
+        {
+            float centerX = (i % _outputCol) / (float)_outputCol * _inputCol + _inputCol / (float)_outputCol / 2;
+            float centerY = (i / _outputCol) / (float)_outputRow * _inputRow + _inputRow / (float)_outputRow / 2;
+            GaussianConvolBuffers[i] = GaussBuffer(centerX, centerY, RayGaussian);
+        }
     }
-  }
 
-  private float[] averageBuffer(float centerX, float centerY, float rayonX, float rayonY) {
-    float[][] result = new float[inputCol][inputRow];
+    private float[] GaussBuffer(float centerX, float centerY, float sigma)
+    {
+        float[][] result = new float[_inputCol][ _inputRow];
 
-    for (int i = 0; i < result.length; i++)
-      for (int j = 0; j < result[i].length; j++)
-        if (Math.abs(i - centerX) < rayonX && Math.abs(j - centerY) < rayonY)
-          result[i][j] = 1 / (4f * rayonX * rayonY) ;
-        else
-          result[i][j] = 0;
+        for (int i = 0; i < result.length; i++)
+            for (int j = 0; j < result[i].length; j++)
+                result[i][j] = (float) (1 / (2 * Math.PI * sigma * sigma) * Math.exp(-((i - centerX) * (i - centerX) + (j - centerY) * (j - centerY)) / (2 * sigma * sigma)));
 
-    return twoDToOneD(result);
-  }
-
-  public float[][] getAverageConvolBuffers() {
-    return averageConvolBuffers;
-  }
-
-  public float[][] getGaussianConvolBuffers() {
-    return gaussianConvolBuffers;
-  }
-
-  public void setInputBuffer(float[] buffer) {
-    this.inputBuffer = buffer;
-  }
-
-
-
-  public void calculateGaussianOutput() {
-    for (int i = 0; i < gaussianConvolBuffers.length; i++) {
-      float sum = 0;
-      for (int j = 0; j < inputCol*inputRow; j++)
-        sum += gaussianConvolBuffers[i][j] * inputBuffer[j];
-
-      outputBuffer[i] = sum;
+        return MUtils.TwoDToOneD(result);
     }
-  }
-  
-   public void calculateAverageOutput() {
-    for (int i = 0; i < gaussianConvolBuffers.length; i++) {
-      float sum = 0;
-      for (int j = 0; j < inputCol*inputRow; j++)
-        sum += averageConvolBuffers[i][j] * inputBuffer[j];
 
-      outputBuffer[i] = sum;
+    public void ComputeUniformAverageConvolBuffers()
+    {
+        UniformAverageConvolBuffers = new float[_outputCol * _outputRow][ _inputCol * _inputRow];
+
+        for (int i = 0; i < UniformAverageConvolBuffers.length; i++)
+        {
+            float centerX = (i % _outputCol) / (float)_outputCol * _inputCol + _inputCol / (float)_outputCol / 2;
+            float centerY = (i / _outputCol) / (float)_outputRow * _inputRow + _inputRow / (float)_outputRow / 2;
+            UniformAverageConvolBuffers[i] = UniformAverageBuffer(centerX, centerY, RayUniformAverage, RayUniformAverage);
+        }
     }
-  }
 
-  public float[] getOutputBuffer() {
-    return outputBuffer;
-  }
+    private float[] UniformAverageBuffer(float centerX, float centerY, float rayonX, float rayonY)
+    {
+        float[][] result = new float[_inputCol][ _inputRow];
 
+        for (int i = 0; i < result.length; i++)
+            for (int j = 0; j < result[i].length; j++)
+                if (Math.abs(i - centerX) < rayonX && Math.abs(j - centerY) < rayonY)
+                    result[i][j] = 1 / (4f * rayonX * rayonY);
+                else
+                    result[i][j] = 0;
 
-
-  private float[][] oneDToTwoD(float[] buffer, int col, int row) {
-    float[][] result = new float[col][row];
-
-    for (int i = 0; i < buffer.length; i++)
-      result[i % col][i / col] = buffer[i];
-
-    return result;
-  }
+        return MUtils.TwoDToOneD(result);
+    }
 
 
 
-  private float[] twoDToOneD(float[][] buffer2d) {
-    float[] result = new float[buffer2d.length * buffer2d[0].length];
+    public void CalculateGaussianOutput()
+    {
+        for (int i = 0; i < GaussianConvolBuffers.length; i++)
+        {
+            float sum = 0;
+            
+            for (int j = 0; j < _inputCol * _inputRow; j++)
+                sum += GaussianConvolBuffers[i][j] * InputBuffer[j];
 
-    for (int i = 0; i < buffer2d.length; i++)
-      for (int j = 0; j < buffer2d[i].length; j++)
-        result[j*buffer2d.length + i] = buffer2d[i][j];
+            OutputBuffer[i] = (int) sum;
+        }
+    }
 
-    return result;
-  }
+    public void CalculateUniformAverageOutput()
+    {
+        for (int i = 0; i < UniformAverageConvolBuffers.length; i++)
+        {
+            float sum = 0;
+            for (int j = 0; j < _inputCol * _inputRow; j++)
+                sum += UniformAverageConvolBuffers[i][j] * InputBuffer[j];
+
+            OutputBuffer[i] = (int) sum;
+        }
+    }
+
+    public int[] GetOutputBuffer()
+    {
+        return OutputBuffer;
+    }
+    
 }
