@@ -1,4 +1,4 @@
-package skin;
+package model;
 
 public class NaiveInterpolation {
 
@@ -55,15 +55,15 @@ public class NaiveInterpolation {
 		return result;
 	}
 
-	public static int[] ResizeBufferNearest(int[] rawBuffer, int resizeFactorCol, int resizeFactorRow, int col, int row)
+	public static float[] ResizeBufferNearest(float[] rawBuffer, int resizeFactorCol, int resizeFactorRow, int col, int row)
 	{
-		int[] result = new int[col * resizeFactorCol * row * resizeFactorRow];
+		float[] result = new float[col * resizeFactorCol * row * resizeFactorRow];
 
-		int[][] result2d = new int[row * resizeFactorRow][col* resizeFactorCol];
+		float[][] result2d = new float[row * resizeFactorRow][col* resizeFactorCol];
 
-		int[][] colInter = new int [col][row * resizeFactorRow];
+		float[][] colInter = new float [col][row * resizeFactorRow];
 
-		int[][] rawBuffer2d = new int[col][row];
+		float[][] rawBuffer2d = new float[col][row];
 
 		for (int i = 0; i < col * row; i++)
 			rawBuffer2d[i % col][i / col] = rawBuffer[i];
@@ -71,7 +71,7 @@ public class NaiveInterpolation {
 		for (int i = 0; i < col; i++)
 			colInter[i] = InterNearest(rawBuffer2d[i], resizeFactorRow);
 
-		int[][] colInterT = new int[row * resizeFactorRow][col];
+		float[][] colInterT = new float[row * resizeFactorRow][col];
 		for (int i = 0; i < colInterT.length; i++)
 			for (int j = 0; j < colInterT[i].length; j++)
 				colInterT[i][j] = colInter[j][i];
@@ -86,9 +86,9 @@ public class NaiveInterpolation {
 		return result;
 	}
 
-	private static int[] InterNearest(int[] column, int resizeFactor)
+	private static float[] InterNearest(float[] column, int resizeFactor)
 	{
-		int[] result = new int[column.length * resizeFactor];
+		float[] result = new float[column.length * resizeFactor];
 
 		for (int i = 0; i < column.length - 1; i++)
 			for (int j = 0; j < resizeFactor; j++)

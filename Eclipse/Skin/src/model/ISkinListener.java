@@ -1,4 +1,4 @@
-package skin;
+package model;
 
 public interface ISkinListener
 {

@@ -1,4 +1,4 @@
-package skin;
+package model;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,13 +24,6 @@ public class SkinSerialPort
 
 	public SkinSerialPort(SkinProcessor bufferWanter, int COM_index, int skin_cells)
 	{
-		System.out.println("COM available :");
-
-		SerialPort[] Device_Ports = SerialPort.getCommPorts();
-
-		for (SerialPort port: Device_Ports) 
-			System.out.println(port.getSystemPortName());
-
 		_serialPort = SerialPort.getCommPorts()[COM_index];
 		_serialPort.setBaudRate(SERIAL_RATE);
 
@@ -39,6 +32,7 @@ public class SkinSerialPort
 				Read();
 			}
 		});
+		_readThread.setDaemon(true); //Don't want to have this thread run when the app is closed
 
 		_bufferWanter = bufferWanter;
 		_skin_cells = skin_cells;
@@ -65,11 +59,11 @@ public class SkinSerialPort
 		{
 
 			int b;
-			List<Integer> buffer = new ArrayList<Integer>();
+			List<Float> buffer = new ArrayList<Float>();
 
 			try {
 				while ((b = in.read()) != 0x00)
-					buffer.add(b);
+					buffer.add((float)b);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

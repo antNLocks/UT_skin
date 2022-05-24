@@ -1,4 +1,4 @@
-package skin;
+package model;
 
 public class SkinLogReader {
 

@@ -1,4 +1,4 @@
-package skin;
+package model;
 
 import java.util.List;
 
@@ -58,9 +58,9 @@ public class MUtils
 		return result;
 	}
 	
-	public static int[] ToArray(List<Integer> buffer)
+	public static float[] ToArray(List<Float> buffer)
 	{
-		int[] result = new int[buffer.size()];
+		float[] result = new float[buffer.size()];
 		
 		
 		for(int  i = 0; i < buffer.size(); i++)
