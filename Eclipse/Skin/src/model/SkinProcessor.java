@@ -11,11 +11,11 @@ public class SkinProcessor
 	public static class ProcessingConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
-		public int MinThreshold = 0;
+		public int MinThreshold = 90;
 		public int MaxThreshold = 255;
-		public int Noise_averageAlgo = 1;
+		public int Noise_averageAlgo = 0;
 		public int Noise_framesForAverage = 3;
-		public float Noise_interpolationFactor = 0.5f;
+		public float Noise_interpolationFactor = 0.1f;
 
 		private  int _resizeFactor = 20;
 
