@@ -2,6 +2,7 @@ package model;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,20 +13,40 @@ import com.fazecast.jSerialComm.SerialPort;
 public class SkinSerialPort
 {
 
-	static final int SERIAL_RATE = 230400;
+	public static class SerialConfiguration implements Serializable {
+
+		private static final long serialVersionUID = 1L;
+		
+		public int BufferSize = 252;
+		public int ByteSeparator = 0x00;
+		public int Baudrate = 230400;
+		
+		public SerialConfiguration(SerialConfiguration s) {
+			BufferSize = s.BufferSize;
+			ByteSeparator = s.ByteSeparator;
+			Baudrate = s.Baudrate;
+			
+		}
+		
+		public SerialConfiguration() {}
+	}
+	
 	
 
 
+	private SerialConfiguration _serialConfig;
+	
 	private SerialPort _serialPort;
 	private boolean _readingLoop;
 	private SkinProcessor _bufferWanter;
 	private Thread _readThread;
-	private int _skin_cells;
 
-	public SkinSerialPort(SkinProcessor bufferWanter, int COM_index, int skin_cells)
+	public SkinSerialPort(SkinProcessor bufferWanter, int COM_index, SerialConfiguration serialConfig)
 	{
+		_serialConfig = serialConfig;
+		
 		_serialPort = SerialPort.getCommPorts()[COM_index];
-		_serialPort.setBaudRate(SERIAL_RATE);
+		_serialPort.setBaudRate(_serialConfig.Baudrate);
 
 		_readThread = new Thread(new Runnable() {
 			public void run() {
@@ -35,7 +56,6 @@ public class SkinSerialPort
 		_readThread.setDaemon(true); //Don't want to have this thread run when the app is closed
 
 		_bufferWanter = bufferWanter;
-		_skin_cells = skin_cells;
 	}
 
 	public void StartReading()
@@ -62,13 +82,13 @@ public class SkinSerialPort
 			List<Float> buffer = new ArrayList<Float>();
 
 			try {
-				while ((b = in.read()) != 0x00)
+				while ((b = in.read()) != _serialConfig.ByteSeparator)
 					buffer.add((float)b);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 
-			if (buffer.size() == _skin_cells)
+			if (buffer.size() == _serialConfig.BufferSize)
 				_bufferWanter.RawBufferUpdate(MUtils.ToArray(buffer));
 
 

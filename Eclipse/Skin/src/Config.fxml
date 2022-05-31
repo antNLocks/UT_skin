@@ -187,7 +187,7 @@
                                     <Insets bottom="7.0" />
                                  </padding>
                               </Label>
-                              <Slider blockIncrement="1.0" majorTickUnit="300.0" max="30.0" min="1.0" showTickLabels="true" value="20.0" GridPane.columnIndex="2" />
+                              <Slider fx:id="resizeFactorSLider" blockIncrement="1.0" majorTickUnit="300.0" max="30.0" min="1.0" showTickLabels="true" value="20.0" GridPane.columnIndex="2" />
                               <Label fx:id="resizeFactorView" text="20" GridPane.columnIndex="1">
                                  <font>
                                     <Font name="System Italic" size="12.0" />

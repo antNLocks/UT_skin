@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import model.SkinSerialPort.SerialConfiguration;
+
 public class SkinProcessor
 {
 	public static class ProcessingConfiguration implements Serializable{
@@ -23,13 +25,32 @@ public class SkinProcessor
 		public int RawBufferRow = 21;
 		public int ProcessedBufferCol = RawBufferCol * _resizeFactor;
 		public int ProcessedBufferRow = RawBufferRow * _resizeFactor;
+		
+		 public ProcessingConfiguration() {}
+		
+		public ProcessingConfiguration(ProcessingConfiguration p) {
+			MinThreshold = p.MinThreshold;
+			MaxThreshold = p.MaxThreshold;
+			Noise_averageAlgo = p.Noise_averageAlgo;
+			Noise_framesForAverage = p.Noise_framesForAverage;
+			Noise_interpolationFactor = p.Noise_interpolationFactor;
+			this._resizeFactor = p._resizeFactor;
+			RawBufferCol = p.RawBufferCol;
+			RawBufferRow = p.RawBufferRow;
+			ProcessedBufferCol = p.ProcessedBufferCol;
+			ProcessedBufferRow = p.ProcessedBufferRow;
+		}
+		
+		
 	}
 
 	public ProcessingConfiguration ProcessingConfig = new ProcessingConfiguration();
 
 	private SkinSerialPort _skinPort;
+	private int _COM_index;
 	private List<ISkinListener> _skinListeners = new ArrayList<ISkinListener>();
 
+	private boolean _isProcessing = false;
 
 
 
@@ -45,9 +66,10 @@ public class SkinProcessor
 
 
 
-	public SkinProcessor(int COM_index)
+	public SkinProcessor(int COM_index, SerialConfiguration serialConfig)
 	{
-		_skinPort = new SkinSerialPort(this, COM_index, ProcessingConfig.RawBufferCol*ProcessingConfig.RawBufferRow);
+		_COM_index = COM_index;
+		_skinPort = new SkinSerialPort(this, _COM_index, serialConfig);
 	}
 
 
@@ -63,16 +85,31 @@ public class SkinProcessor
 		ProcessingConfig.ProcessedBufferCol = ProcessingConfig.RawBufferCol * ProcessingConfig._resizeFactor;
 		ProcessingConfig.ProcessedBufferRow = ProcessingConfig.RawBufferRow * ProcessingConfig._resizeFactor;
 	}
+	
+	public void SetSerialConfiguration(SerialConfiguration serialConfig) {
+		boolean wasProcessing = _isProcessing;
+		
+		if(wasProcessing)
+			StopProcessing();
+		
+		_skinPort = new SkinSerialPort(this, _COM_index, serialConfig);
+		
+		if(wasProcessing)
+			StartProcessing();
+	}
+	
 
 
 	public void StartProcessing()
 	{
 		_skinPort.StartReading();
+		_isProcessing = true;
 	}
 
 	public void StopProcessing()
 	{
 		_skinPort.StopReading();
+		_isProcessing = false;
 	}
 
 

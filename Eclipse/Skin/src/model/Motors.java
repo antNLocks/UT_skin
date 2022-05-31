@@ -11,8 +11,25 @@ public class Motors
 		public int InputRow;
 		public int OutputCol = 2;
 		public int OutputRow = 4;
-		public int RayGaussian = 60;
-		public int RayUniformAverage = 60;
+		public int DeviationGaussian = 60;
+		public int DeviationUniform = 60;
+		public float NormalisationFactorGaussian = 1;
+		public float NormalisationFactorUniform = 1;
+		
+		public MotorsConfiguration() {}
+		
+		public MotorsConfiguration(MotorsConfiguration m) {
+			InputCol = m.InputCol;
+			InputRow = m.InputRow;
+			OutputCol = m.OutputCol;
+			OutputRow = m.OutputRow;
+			DeviationGaussian = m.DeviationGaussian;
+			DeviationUniform = m.DeviationUniform;
+			NormalisationFactorGaussian = m.NormalisationFactorGaussian;
+			NormalisationFactorUniform = m.NormalisationFactorUniform;
+		}
+		
+		
 		
 	}
 	
@@ -44,17 +61,17 @@ public class Motors
         {
             float centerX = (i % _motorsConfig.OutputCol) / (float)_motorsConfig.OutputCol * _motorsConfig.InputCol + _motorsConfig.InputCol / (float)_motorsConfig.OutputCol / 2;
             float centerY = (i / _motorsConfig.OutputCol) / (float)_motorsConfig.OutputRow * _motorsConfig.InputRow + _motorsConfig.InputRow / (float)_motorsConfig.OutputRow / 2;
-            GaussianConvolBuffers[i] = GaussBuffer(centerX, centerY, _motorsConfig.RayGaussian);
+            GaussianConvolBuffers[i] = GaussBuffer(centerX, centerY, _motorsConfig.DeviationGaussian);
         }
     }
 
-    private float[] GaussBuffer(float centerX, float centerY, float sigma)
+    private float[] GaussBuffer(float centerX, float centerY, float deviation)
     {
         float[][] result = new float[_motorsConfig.InputCol][ _motorsConfig.InputRow];
 
         for (int i = 0; i < result.length; i++)
             for (int j = 0; j < result[i].length; j++)
-                result[i][j] = (float) (1 / (2 * Math.PI * sigma * sigma) * Math.exp(-((i - centerX) * (i - centerX) + (j - centerY) * (j - centerY)) / (2 * sigma * sigma)));
+                result[i][j] = (float) (_motorsConfig.NormalisationFactorGaussian / (2 * Math.PI * deviation * deviation) * Math.exp(-((i - centerX) * (i - centerX) + (j - centerY) * (j - centerY)) / (2 * deviation * deviation)));
 
         return MUtils.TwoDToOneD(result);
     }
@@ -67,18 +84,18 @@ public class Motors
         {
             float centerX = (i % _motorsConfig.OutputCol) / (float)_motorsConfig.OutputCol * _motorsConfig.InputCol + _motorsConfig.InputCol / (float)_motorsConfig.OutputCol / 2;
             float centerY = (i / _motorsConfig.OutputCol) / (float)_motorsConfig.OutputRow * _motorsConfig.InputRow + _motorsConfig.InputRow / (float)_motorsConfig.OutputRow / 2;
-            UniformAverageConvolBuffers[i] = UniformAverageBuffer(centerX, centerY, _motorsConfig.RayUniformAverage, _motorsConfig.RayUniformAverage);
+            UniformAverageConvolBuffers[i] = UniformAverageBuffer(centerX,  centerY, 1.732f* _motorsConfig.DeviationUniform, 1.732f * _motorsConfig.DeviationUniform);
         }
     }
 
-    private float[] UniformAverageBuffer(float centerX, float centerY, float rayonX, float rayonY)
+    private float[] UniformAverageBuffer(float centerX, float centerY, float supportRayX, float supportRayY)
     {
         float[][] result = new float[_motorsConfig.InputCol][ _motorsConfig.InputRow];
 
         for (int i = 0; i < result.length; i++)
             for (int j = 0; j < result[i].length; j++)
-                if (Math.abs(i - centerX) < rayonX && Math.abs(j - centerY) < rayonY)
-                    result[i][j] = 1 / (4f * rayonX * rayonY);
+                if (Math.abs(i - centerX) < supportRayX && Math.abs(j - centerY) < supportRayY)
+                    result[i][j] = _motorsConfig.NormalisationFactorUniform / (4f * supportRayX * supportRayY);
                 else
                     result[i][j] = 0;
 
@@ -96,7 +113,7 @@ public class Motors
             for (int j = 0; j < _motorsConfig.InputCol * _motorsConfig.InputRow; j++)
                 sum += GaussianConvolBuffers[i][j] * InputBuffer[j];
 
-            OutputBuffer[i] = (int) sum;
+            OutputBuffer[i] = Math.min(sum, 255);
         }
     }
 
@@ -108,7 +125,7 @@ public class Motors
             for (int j = 0; j < _motorsConfig.InputCol * _motorsConfig.InputRow; j++)
                 sum += UniformAverageConvolBuffers[i][j] * InputBuffer[j];
 
-            OutputBuffer[i] = sum;
+            OutputBuffer[i] = Math.min(sum, 255);
         }
     }
 
