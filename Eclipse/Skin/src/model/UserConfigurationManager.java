@@ -12,7 +12,7 @@ public class UserConfigurationManager {
 	public interface UserObserver {
 		public void ProcessingConfigurationUpdated(SkinProcessor.ProcessingConfiguration userConfig);
 		public void MotorsConfigurationUpdated(Motors.MotorsConfiguration userConfig);
-		public void SerialConfiguration(SkinSerialPort.SerialConfiguration userConfig);
+		public void SerialConfigurationUpdated(SkinSerialPort.SerialConfiguration userConfig);
 	}
 	
 		
@@ -44,7 +44,7 @@ public class UserConfigurationManager {
 			obs.ProcessingConfigurationUpdated(new ProcessingConfiguration(_processingConfig));
 	}
 	
-	public void setMotorsConfiguration(Motors.MotorsConfiguration conf) {
+	public void SetMotorsConfiguration(Motors.MotorsConfiguration conf) {
 		_motorsConfig = conf;
 		
 		for(UserObserver obs : _observers)
@@ -55,7 +55,7 @@ public class UserConfigurationManager {
 		_serialConfig = conf;
 		
 		for(UserObserver obs : _observers)
-			obs.SerialConfiguration(new SerialConfiguration(_serialConfig));
+			obs.SerialConfigurationUpdated(new SerialConfiguration(_serialConfig));
 	}
 	
 	

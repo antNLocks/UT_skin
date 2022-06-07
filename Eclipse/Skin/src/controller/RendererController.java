@@ -21,6 +21,7 @@ import model.NaiveInterpolation;
 import model.SkinProcessor;
 import model.UserConfigurationManager;
 import model.SkinProcessor.ProcessingConfiguration;
+import model.SkinSerialPort;
 import model.SkinSerialPort.SerialConfiguration;
 
 public class RendererController implements UserConfigurationManager.UserObserver, ISkinListener{
@@ -33,6 +34,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	@FXML
 	private ImageView outputUniformAverage;
 
+	private SkinSerialPort _skinSerialPort;
 	private SkinProcessor _skinProcessor;
 	private Motors _motors;
 
@@ -41,52 +43,41 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private AtomicReference<float[]> _outputGaussianBufferRef = new AtomicReference<>();
 	private AtomicReference<float[]> _outputUniformAverageBufferRef = new AtomicReference<>();
 
-	private int _inputCol;
-	private int _inputRow;
-
-	private int _outputCol;
-	private int _outputRow;
-
-	private int _motorsCol;
-	private int _motorsRow;
-
-	private int _resizeFactorMotorsCol;
-	private int _resizeFactorMotorsRow;
-
-	private boolean _updateMotorsConfig = false;
-	private int _COM_index;
 
 
-	@FXML
-	private void initialize() {
+	private int _outputMotorsImageCol;
+	private int _outputMotorsImageRow;
 
-	}
+
+	private int _resizeFactorMotorsImageCol;
+	private int _resizeFactorMotorsImageRow;
+
+
+	private ProcessingConfiguration _processingConfig;
+	private MotorsConfiguration _motorsConfig;
 
 	public RendererController(int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig) {
-		_COM_index = COM;
-		
-		_skinProcessor = new SkinProcessor(_COM_index, serialConfig);
+		_skinProcessor = new SkinProcessor();
 		_skinProcessor.Register(this);
-
+		_skinSerialPort = new SkinSerialPort(_skinProcessor, COM, serialConfig);
+		
 		ProcessingConfigurationUpdated(processingConfig);
 		MotorsConfigurationUpdated(motorsConfig);
 
-		AnimationTimer animation = new AnimationTimer() {
+		new AnimationTimer() {
 
 			@Override
 			public void handle(long now) {
-				TryPrintBuffer(_inputRawBufferRef, inputRaw, _inputCol, _inputRow);
-				TryPrintBuffer(_inputProcessedBufferRef, inputProcessed, _inputCol, _inputRow);
-				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputCol, _outputRow);
-				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputCol, _outputRow);
+				TryPrintBuffer(_inputRawBufferRef, inputRaw, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
+				TryPrintBuffer(_inputProcessedBufferRef, inputProcessed, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
+				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
+				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
 			}
 
-		};
+		}.start();
+		
 
-		animation.start();
-
-		_skinProcessor.StartProcessing();
-
+		_skinSerialPort.StartReading();
 		LaunchWindow();
 	}
 
@@ -103,11 +94,13 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			Stage newWindow = new Stage();
 			newWindow.setTitle("Renderer");
 			newWindow.setScene(scene);
+			
+			newWindow.setOnCloseRequest(e -> _skinSerialPort.StopReading());
+
 
 			newWindow.show();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -115,26 +108,30 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	//Called by SkinProcessor
 	@Override
 	public void BufferUpdate() {
-		float[] inputRawBuffer = NaiveInterpolation.ResizeBufferNearest(_skinProcessor.RawBuffer, _skinProcessor.getResizeFactor(), _skinProcessor.getResizeFactor(),  12,21); 
+		try {
+
+		float[] inputRawBuffer = NaiveInterpolation.ResizeBufferNearest(_skinProcessor.RawBuffer, _processingConfig.ResizeFactor, _processingConfig.ResizeFactor,  _processingConfig.RawBufferCol, _processingConfig.RawBufferRow); 
 		_inputRawBufferRef.set(inputRawBuffer);
 
 		_inputProcessedBufferRef.set(_skinProcessor.ProcessedBuffer);
 
-		if(!_updateMotorsConfig) {
-			_motors.InputBuffer = _skinProcessor.ProcessedBuffer;
+		_motors.InputBuffer = _skinProcessor.ProcessedBuffer;
 
 			_motors.CalculateGaussianOutput();
-			float[] outputGaussianBuffer = NaiveInterpolation.ResizeBufferNearest(_motors.OutputBuffer, _resizeFactorMotorsCol, _resizeFactorMotorsRow,  _motorsCol, _motorsRow);
+
+			float[] outputGaussianBuffer = NaiveInterpolation.ResizeBufferNearest(_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow);
 			_outputGaussianBufferRef.set(outputGaussianBuffer);
 
 			_motors.CalculateUniformAverageOutput();
-			float[] outputUniformAverageBuffer = NaiveInterpolation.ResizeBufferNearest(_motors.OutputBuffer, _resizeFactorMotorsCol, _resizeFactorMotorsRow,  _motorsCol, _motorsRow);
+			float[] outputUniformAverageBuffer = NaiveInterpolation.ResizeBufferNearest(_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow);
 			_outputUniformAverageBufferRef.set(outputUniformAverageBuffer);
-		}
+
+		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
+
 
 	}
 
-	private Image BufferToImage(float[] buffer, int col, int row) {
+	private Image BufferToImage(float[] buffer, int col, int row)  throws Exception {
 		WritableImage result = new WritableImage(col, row);
 		PixelWriter pixelWriter = result.getPixelWriter();
 		for(int i = 0; i < col; i++)
@@ -148,40 +145,38 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private void TryPrintBuffer(AtomicReference<float[]> bufferRef, ImageView imgView, int col, int row) {
 		float[] buffer = bufferRef.getAndSet(null);
 		if(buffer != null)
-			imgView.setImage(BufferToImage(buffer, col, row));
+			try {
+				imgView.setImage(BufferToImage(buffer, col, row));
+			} catch (Exception e) {/* Memory issue because the sized of the buffer was changed during the print operation*/}
 	}
 
 
 	//Called by UserConfigurationManager
 	@Override
 	public void MotorsConfigurationUpdated(MotorsConfiguration userConfig) {
-		_updateMotorsConfig = true;
-		
-		_inputCol = userConfig.InputCol;
-		_inputRow = userConfig.InputRow;
-		_motorsCol = userConfig.OutputCol;
-		_motorsRow = userConfig.OutputRow;
+		_motorsConfig = userConfig;
+		_resizeFactorMotorsImageCol =  userConfig.InputCol / userConfig.OutputCol;
+		_resizeFactorMotorsImageRow = userConfig.InputRow / userConfig.OutputRow;
 
-		_resizeFactorMotorsCol = _inputCol / _motorsCol;
-		_resizeFactorMotorsRow = _inputRow / _motorsRow;
+		_outputMotorsImageCol = userConfig.OutputCol * _resizeFactorMotorsImageCol ;
+		_outputMotorsImageRow = userConfig.OutputRow * _resizeFactorMotorsImageRow;
 
-		_outputCol = _motorsCol * _resizeFactorMotorsCol ;
-		_outputRow = _motorsRow * _resizeFactorMotorsRow;
 
-		_motors = new Motors(userConfig);
-		
-		_updateMotorsConfig = false;
+		new Thread(()-> _motors = new Motors(userConfig)).start();
 	}
 
 	//Called by UserConfigurationManager
 	@Override
 	public void ProcessingConfigurationUpdated(ProcessingConfiguration userConfig) {
+		_processingConfig = userConfig;
 		_skinProcessor.ProcessingConfig = userConfig;
 	}
 
+	//Called by UserConfigurationManager
 	@Override
-	public void SerialConfiguration(SerialConfiguration userConfig) {
-		_skinProcessor.SetSerialConfiguration(userConfig);
+	public void SerialConfigurationUpdated(SerialConfiguration userConfig) {
+		_skinSerialPort.SetSerialConfiguration(userConfig);
+		
 	}
 
 

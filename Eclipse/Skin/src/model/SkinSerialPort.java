@@ -17,7 +17,7 @@ public class SkinSerialPort
 
 		private static final long serialVersionUID = 1L;
 		
-		public int BufferSize = 252;
+		public int BufferSize = 36;
 		public int ByteSeparator = 0x00;
 		public int Baudrate = 230400;
 		
@@ -48,19 +48,32 @@ public class SkinSerialPort
 		_serialPort = SerialPort.getCommPorts()[COM_index];
 		_serialPort.setBaudRate(_serialConfig.Baudrate);
 
-		_readThread = new Thread(new Runnable() {
-			public void run() {
-				Read();
-			}
-		});
-		_readThread.setDaemon(true); //Don't want to have this thread run when the app is closed
 
 		_bufferWanter = bufferWanter;
+	}
+	
+	public void SetSerialConfiguration(SerialConfiguration config) {
+		if(config.Baudrate != _serialConfig.Baudrate) {
+			new Thread(() -> {
+				StopReading();
+				try {
+					Thread.sleep(300);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				_serialPort.setBaudRate(config.Baudrate);
+				StartReading();
+			}).start();
+		}
+		_serialConfig = config;
 	}
 
 	public void StartReading()
 	{
 		_readingLoop = true;
+		_serialPort.openPort();
+		_readThread = new Thread(()-> Read());
+		_readThread.setDaemon(true); //Don't want to have this thread run when the app is closed
 		_readThread.start();
 	}
 
@@ -68,32 +81,27 @@ public class SkinSerialPort
 	public void StopReading()
 	{
 		_readingLoop = false;
-
+		_serialPort.closePort();	//Will likely be the cause of an exception which will be caught
 	}
 
 	private void Read() {
-		_serialPort.openPort();
 		_serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
 		InputStream in = _serialPort.getInputStream();
 		while (_readingLoop)
 		{
-
 			int b;
 			List<Float> buffer = new ArrayList<Float>();
 
 			try {
-				while ((b = in.read()) != _serialConfig.ByteSeparator)
+				while ((b = in.read()) != _serialConfig.ByteSeparator && _readingLoop)
 					buffer.add((float)b);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			
 
 			if (buffer.size() == _serialConfig.BufferSize)
 				_bufferWanter.RawBufferUpdate(MUtils.ToArray(buffer));
-
-
-
 		}
-		_serialPort.closePort();	
 	}
 }

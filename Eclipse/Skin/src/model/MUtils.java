@@ -16,7 +16,7 @@ public class MUtils
 		return Math.min(Math.max(value, min), max);
 	}
 	
-	public static  float[][] OneDToTwoD(float[] buffer, int col, int row)
+	public static  float[][] OneDToTwoD(float[] buffer, int col, int row)  
 	{
 		float[][] result = new float[col][row];
 
@@ -26,17 +26,8 @@ public class MUtils
 		return result;
 	}
 
-	public static  int[][] OneDToTwoD(int[] buffer, int col, int row)
-	{
-		int[][] result = new int[col][row];
-
-		for (int i = 0; i < buffer.length; i++)
-			result[i % col][ i / col] = buffer[i];
-
-		return result;
-	}
-
-	public static float[] TwoDToOneD(float[][] buffer2d)
+	
+	public static float[] TwoDToOneD(float[][] buffer2d)  
 	{
 		float[] result = new float[buffer2d.length * buffer2d[0].length];
 
@@ -47,16 +38,6 @@ public class MUtils
 		return result;
 	}
 
-	public static int[] TwoDToOneD(int[][] buffer2d)
-	{
-		int[] result = new int[buffer2d.length * buffer2d[0].length];
-
-		for (int i = 0; i < buffer2d.length; i++)
-			for (int j = 0; j < buffer2d[i].length; j++)
-				result[j * buffer2d.length + i] = buffer2d[i][j];
-
-		return result;
-	}
 	
 	public static float[] ToArray(List<Float> buffer)
 	{
