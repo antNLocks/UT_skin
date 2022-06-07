@@ -5,6 +5,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SkinProcessor
 {
@@ -48,48 +49,62 @@ public class SkinProcessor
 
 
 	//Public access because I want to be close to the C# version which has { get; private set; }
-	public float[] RawBuffer;
+	public AtomicReference<float[]> RawBuffer = new AtomicReference<>();
 
-	public float[][] RawBuffer2d;
+	public AtomicReference<float[]> ProcessedBuffer = new AtomicReference<>();
 
-	public float[] ProcessedBuffer;
+	private FPSAnalyser _fpsRawAnalyser = new FPSAnalyser();
+	private FPSAnalyser _fpsProcessedAnalyser = new FPSAnalyser();
 
-	public float[][] ProcessedBuffer2d;
 
+	public SkinProcessor() {
+		Thread processingThread = new Thread(() -> {
+			while(true) 
+				ProcessBuffer();
+		});
 
+		processingThread.setDaemon(true);
+		processingThread.start();
+	}
 
 	public void Register(ISkinListener skinListener)
 	{
 		_skinListeners.add(skinListener);
 	}
 
+	public float GetRawFPS() {
+		return _fpsRawAnalyser.GetFPS();
+	}
+
+	public float GetProcessedFPS() {
+		return _fpsProcessedAnalyser.GetFPS();
+	}
+
 	//Called by _skinSerialPort
 	public void RawBufferUpdate(float[] rawBuffer)
 	{
-		RawBuffer = rawBuffer;
+		RawBuffer.set(rawBuffer);;
 
-		try {
-			RawBuffer2d = MUtils.OneDToTwoD(RawBuffer, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
-		}catch(ArrayIndexOutOfBoundsException e) {/* ResizeFactor was changed */}
-
-		ProcessBuffer(rawBuffer);
+		_fpsRawAnalyser.Tick();
 	}
 
-	private void ProcessBuffer(float[] buffer)
+	private void ProcessBuffer()
 	{
+		if(RawBuffer.get() != null) {
 			float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
-					AverageBufferOverTime_rollingAverage(buffer, ProcessingConfig.Noise_framesForAverage) :
-						AverageBufferOverTime_interpolationPreviousFrames(buffer, ProcessingConfig.Noise_interpolationFactor);
+					AverageBufferOverTime_rollingAverage(RawBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
+						AverageBufferOverTime_interpolationPreviousFrames(RawBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
 			float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactor, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
 			float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
 
-			ProcessedBuffer = thresholdMappedBuffer;
-			try {
-			ProcessedBuffer2d = MUtils.OneDToTwoD(ProcessedBuffer, ProcessingConfig.ProcessedBufferCol(), ProcessingConfig.ProcessedBufferRow());
-		}catch(ArrayIndexOutOfBoundsException e) {/* ResizeFactor was changed */}
+			ProcessedBuffer.set(thresholdMappedBuffer);
+			
+			for (ISkinListener skinListener : _skinListeners)
+				skinListener.BufferUpdate();
 
-		for (ISkinListener skinListener : _skinListeners)
-			skinListener.BufferUpdate();
+			_fpsProcessedAnalyser.Tick();
+
+		}
 
 	}
 

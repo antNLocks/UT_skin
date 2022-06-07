@@ -16,7 +16,7 @@ public class MUtils
 		return Math.min(Math.max(value, min), max);
 	}
 	
-	public static  float[][] OneDToTwoD(float[] buffer, int col, int row)  
+	public static float[][] OneDToTwoD(float[] buffer, int col, int row)  
 	{
 		float[][] result = new float[col][row];
 

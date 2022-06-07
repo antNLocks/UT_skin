@@ -8,12 +8,14 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
 import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import model.FPSAnalyser;
 import model.ISkinListener;
 import model.Motors;
 import model.Motors.MotorsConfiguration;
@@ -25,14 +27,37 @@ import model.SkinSerialPort;
 import model.SkinSerialPort.SerialConfiguration;
 
 public class RendererController implements UserConfigurationManager.UserObserver, ISkinListener{
+
+	private Stage _window;
+	private int _minWidth = 700;
+	private int _minHeight = 300;
+	
 	@FXML
-	private ImageView inputRaw;
+	private Label drawingFPS;
+
 	@FXML
 	private ImageView inputProcessed;
+
+	@FXML
+	private ImageView inputRaw;
+
+	@FXML
+	private Label motorsGaussianFPS;
+
+	@FXML
+	private Label motorsUniformFPS;
+
 	@FXML
 	private ImageView outputGaussian;
+
 	@FXML
 	private ImageView outputUniformAverage;
+
+	@FXML
+	private Label processedSignalFPS;
+
+	@FXML
+	private Label rawSignalFPS;
 
 	private SkinSerialPort _skinSerialPort;
 	private SkinProcessor _skinProcessor;
@@ -56,11 +81,16 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private ProcessingConfiguration _processingConfig;
 	private MotorsConfiguration _motorsConfig;
 
+	private FPSAnalyser _fpsMotorsAnalyser = new FPSAnalyser();
+	private FPSAnalyser _fpsDrawingAnalyser = new FPSAnalyser();
+
 	public RendererController(int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig) {
+		LaunchWindow();
+
 		_skinProcessor = new SkinProcessor();
 		_skinProcessor.Register(this);
 		_skinSerialPort = new SkinSerialPort(_skinProcessor, COM, serialConfig);
-		
+
 		ProcessingConfigurationUpdated(processingConfig);
 		MotorsConfigurationUpdated(motorsConfig);
 
@@ -72,13 +102,27 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				TryPrintBuffer(_inputProcessedBufferRef, inputProcessed, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
 				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
 				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
+				
+				rawSignalFPS.setText((int) _skinProcessor.GetRawFPS() + " fps");
+				processedSignalFPS.setText((int) _skinProcessor.GetProcessedFPS() + " fps");
+				motorsGaussianFPS.setText((int) _fpsMotorsAnalyser.GetFPS()*2 + " fps");
+				motorsUniformFPS.setText((int) _fpsMotorsAnalyser.GetFPS()*2 + " fps");
+				drawingFPS.setText("Drawing rate : " + (int) _fpsDrawingAnalyser.GetFPS() + " fps");
+				
+				_fpsDrawingAnalyser.Tick();
 			}
 
 		}.start();
-		
+
+		Thread motorsProcessingThread = new Thread(() -> {
+			while(true)
+				ProcessMotors();
+		});
+
+		motorsProcessingThread.setDaemon(true);
+		motorsProcessingThread.start();
 
 		_skinSerialPort.StartReading();
-		LaunchWindow();
 	}
 
 
@@ -89,47 +133,52 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			loader.setController(this);
 			Parent root = loader.load();
 
-			Scene scene = new Scene(root,1000,600);
+			Scene scene = new Scene(root,10,10);
 
-			Stage newWindow = new Stage();
-			newWindow.setTitle("Renderer");
-			newWindow.setScene(scene);
-			
-			newWindow.setOnCloseRequest(e -> _skinSerialPort.StopReading());
+			_window = new Stage();
+			_window.setTitle("Renderer");
+			_window.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("al.png")));
+
+			_window.setScene(scene);
+
+			_window.setOnCloseRequest(e -> _skinSerialPort.StopReading());
 
 
-			newWindow.show();
+			_window.show();
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	//Called by SkinProcessor
 	@Override
 	public void BufferUpdate() {
+		_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+				_skinProcessor.RawBuffer.get(), _processingConfig.ResizeFactor, _processingConfig.ResizeFactor,  _processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
+		_inputProcessedBufferRef.set(_skinProcessor.ProcessedBuffer.get());
+	}
+
+
+	private void ProcessMotors() {
 		try {
-
-		float[] inputRawBuffer = NaiveInterpolation.ResizeBufferNearest(_skinProcessor.RawBuffer, _processingConfig.ResizeFactor, _processingConfig.ResizeFactor,  _processingConfig.RawBufferCol, _processingConfig.RawBufferRow); 
-		_inputRawBufferRef.set(inputRawBuffer);
-
-		_inputProcessedBufferRef.set(_skinProcessor.ProcessedBuffer);
-
-		_motors.InputBuffer = _skinProcessor.ProcessedBuffer;
+			_motors.InputBuffer = _skinProcessor.ProcessedBuffer.get();
 
 			_motors.CalculateGaussianOutput();
 
-			float[] outputGaussianBuffer = NaiveInterpolation.ResizeBufferNearest(_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow);
-			_outputGaussianBufferRef.set(outputGaussianBuffer);
+			_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+					_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 			_motors.CalculateUniformAverageOutput();
-			float[] outputUniformAverageBuffer = NaiveInterpolation.ResizeBufferNearest(_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow);
-			_outputUniformAverageBufferRef.set(outputUniformAverageBuffer);
+			
+			_outputUniformAverageBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+					_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
+
+			_fpsMotorsAnalyser.Tick();
 
 		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
 
-
 	}
+
 
 	private Image BufferToImage(float[] buffer, int col, int row)  throws Exception {
 		WritableImage result = new WritableImage(col, row);
@@ -163,6 +212,10 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 
 		new Thread(()-> _motors = new Motors(userConfig)).start();
+
+		_window.setMinWidth(Math.max(_processingConfig.ProcessedBufferCol()*2 + _outputMotorsImageCol*2 + 200, _minWidth));
+		_window.setMinHeight(Math.max(Math.max(_processingConfig.ProcessedBufferRow(), _outputMotorsImageRow) + 200, _minHeight));
+
 	}
 
 	//Called by UserConfigurationManager
@@ -170,14 +223,21 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	public void ProcessingConfigurationUpdated(ProcessingConfiguration userConfig) {
 		_processingConfig = userConfig;
 		_skinProcessor.ProcessingConfig = userConfig;
+
+		_window.setMinWidth(Math.max(_processingConfig.ProcessedBufferCol()*2 + _outputMotorsImageCol*2 + 200, _minWidth));
+		_window.setMinHeight(Math.max(Math.max(_processingConfig.ProcessedBufferRow(), _outputMotorsImageRow) + 200, _minHeight));
 	}
 
 	//Called by UserConfigurationManager
 	@Override
 	public void SerialConfigurationUpdated(SerialConfiguration userConfig) {
 		_skinSerialPort.SetSerialConfiguration(userConfig);
-		
+
 	}
+
+
+
+
 
 
 }
