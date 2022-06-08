@@ -6,6 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.stage.Stage;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 
 
 public class Main extends Application {
@@ -20,6 +21,8 @@ public class Main extends Application {
 			primaryStage.setAlwaysOnTop(true);
 			primaryStage.setTitle("Configuration");
 			primaryStage.setResizable(false);
+			primaryStage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("al.png")));
+
 			primaryStage.setOnCloseRequest(e -> Platform.exit());
 			primaryStage.show();
 		} catch(Exception e) {
