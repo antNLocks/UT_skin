@@ -236,7 +236,10 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	}
 
 
-
+	@FXML
+	private void onLaunchCalibration() {
+		_skinSerialPort.Send("c");
+	}
 
 
 

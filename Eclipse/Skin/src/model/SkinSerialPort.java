@@ -2,6 +2,7 @@ package model;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,12 +21,13 @@ public class SkinSerialPort
 		public int BufferSize = 36;
 		public int ByteSeparator = 0x00;
 		public int Baudrate = 230400;
+		public int HardwareGain = 2;
 		
 		public SerialConfiguration(SerialConfiguration s) {
 			BufferSize = s.BufferSize;
 			ByteSeparator = s.ByteSeparator;
 			Baudrate = s.Baudrate;
-			
+			HardwareGain = s.HardwareGain;
 		}
 		
 		public SerialConfiguration() {}
@@ -47,7 +49,9 @@ public class SkinSerialPort
 		
 		_serialPort = SerialPort.getCommPorts()[COM_index];
 		_serialPort.setBaudRate(_serialConfig.Baudrate);
+		_serialPort.openPort();
 
+		SetGain(_serialConfig.HardwareGain);
 
 		_bufferWanter = bufferWanter;
 	}
@@ -65,6 +69,10 @@ public class SkinSerialPort
 				StartReading();
 			}).start();
 		}
+		
+		if(config.HardwareGain != _serialConfig.HardwareGain)
+			SetGain(config.HardwareGain);
+		
 		_serialConfig = config;
 	}
 
@@ -83,10 +91,14 @@ public class SkinSerialPort
 		_readingLoop = false;
 		_serialPort.closePort();	//Will likely be the cause of an exception which will be caught
 	}
+	
+	public void Send(String s) {
+		new PrintStream(_serialPort.getOutputStream()).println(s);
+	}
 
 	private void Read() {
 		_serialPort.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0);
-		InputStream in = _serialPort.getInputStream();
+		InputStream in = _serialPort.getInputStreamWithSuppressedTimeoutExceptions();
 		while (_readingLoop)
 		{
 			int b;
@@ -103,5 +115,9 @@ public class SkinSerialPort
 			if (buffer.size() == _serialConfig.BufferSize)
 				_bufferWanter.RawBufferUpdate(MUtils.ToArray(buffer));
 		}
+	}
+	
+	private void SetGain(int gain) {
+		Send("g:" + gain);
 	}
 }

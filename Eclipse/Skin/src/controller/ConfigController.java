@@ -61,6 +61,12 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	@FXML
 	private Label gaussianNormalisationFactorView;
+	
+	@FXML
+	private Slider hardwareGainSlider;
+	
+	@FXML
+	private Label hardwareGainView;
 
 	@FXML
 	private Slider interpolationFactorSlider;
@@ -328,6 +334,12 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				motorsRowTF.setStyle(VALID_STYLE);
 			}
 		});
+		
+		hardwareGainSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+			SerialConfiguration config = _userConfigManager.GetSerialConfiguration();
+			config.HardwareGain = (int) hardwareGainSlider.getValue();
+			_userConfigManager.SetSerialConfiguration(config);
+		});
 
 	}
 
@@ -404,5 +416,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		frameSeparatorByteTF.setText(String.format("0x%02X", userConfig.ByteSeparator));
 		frameSeparatorByteTF.setStyle(VALID_STYLE);
 		baudrateCB.setValue(userConfig.Baudrate);
+		
+		hardwareGainView.setText(Integer.toString(userConfig.HardwareGain));
+		hardwareGainSlider.setValue(userConfig.HardwareGain);
 	}
 }
