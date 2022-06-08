@@ -1,6 +1,5 @@
 package controller;
 
-import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
 import com.fazecast.jSerialComm.SerialPort;
