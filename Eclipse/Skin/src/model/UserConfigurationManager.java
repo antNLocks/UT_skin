@@ -16,7 +16,7 @@ import model.SkinSerialPort.SerialConfiguration;
 
 public class UserConfigurationManager {
 
-	public interface UserObserver {
+	public static interface UserObserver {
 		public void ProcessingConfigurationUpdated(SkinProcessor.ProcessingConfiguration userConfig);
 		public void MotorsConfigurationUpdated(Motors.MotorsConfiguration userConfig);
 		public void SerialConfigurationUpdated(SkinSerialPort.SerialConfiguration userConfig);

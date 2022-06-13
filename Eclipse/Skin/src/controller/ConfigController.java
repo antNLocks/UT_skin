@@ -128,6 +128,18 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	@FXML
 	private RadioButton rollingAverageT;
+	
+	@FXML
+	private Slider sleepingTimeMotorsSlider;
+	
+	@FXML
+	private Label sleepingTimeMotorsView;
+	
+	@FXML
+	private Slider sleepingTimeProcessingSlider;
+	
+	@FXML
+	private Label sleepingTimeProcessingView;
 
 	@FXML
 	private Slider uniformDeviationSlider;
@@ -152,6 +164,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		config.MaxThreshold = (int)	maxThresholdSlider.getValue();
 		config.Noise_framesForAverage = (int) framesForAverageSlider.getValue();
 		config.Noise_interpolationFactor = (float) interpolationFactorSlider.getValue();
+		config.SleepingTime = (long) sleepingTimeProcessingSlider.getValue();
 
 		GetUserConfigManager().SetProcessingConfiguration(config);
 	};

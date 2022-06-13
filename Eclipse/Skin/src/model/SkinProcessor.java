@@ -2,12 +2,10 @@ package model;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class SkinProcessor
+public class SkinProcessor extends ThreadProcess
 {
 	public static class ProcessingConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
@@ -17,6 +15,7 @@ public class SkinProcessor
 		public int Noise_averageAlgo = 0;
 		public int Noise_framesForAverage = 3;
 		public float Noise_interpolationFactor = 0.1f;
+		public long SleepingTime = 0;
 
 		public  int ResizeFactor = 20;
 
@@ -36,16 +35,11 @@ public class SkinProcessor
 			ResizeFactor = p.ResizeFactor;
 			RawBufferCol = p.RawBufferCol;
 			RawBufferRow = p.RawBufferRow;
-
+			SleepingTime = p.SleepingTime;
 		}
-
-
 	}
 
 	public ProcessingConfiguration ProcessingConfig = new ProcessingConfiguration();
-
-	private List<ISkinListener> _skinListeners = new ArrayList<ISkinListener>();
-
 
 
 	//Public access because I want to be close to the C# version which has { get; private set; }
@@ -54,31 +48,12 @@ public class SkinProcessor
 	public AtomicReference<float[]> ProcessedBuffer = new AtomicReference<>();
 
 	private FPSAnalyser _fpsRawAnalyser = new FPSAnalyser();
-	private FPSAnalyser _fpsProcessedAnalyser = new FPSAnalyser();
 
-
-	public SkinProcessor() {
-		Thread processingThread = new Thread(() -> {
-			while(true) 
-				ProcessBuffer();
-		});
-
-		processingThread.setDaemon(true);
-		processingThread.start();
-	}
-
-	public void Register(ISkinListener skinListener)
-	{
-		_skinListeners.add(skinListener);
-	}
 
 	public float GetRawFPS() {
 		return _fpsRawAnalyser.GetFPS();
 	}
 
-	public float GetProcessedFPS() {
-		return _fpsProcessedAnalyser.GetFPS();
-	}
 
 	//Called by _skinSerialPort
 	public void RawBufferUpdate(float[] rawBuffer)
@@ -100,17 +75,10 @@ public class SkinProcessor
 
 				ProcessedBuffer.set(thresholdMappedBuffer);
 
-				for (ISkinListener skinListener : _skinListeners)
-					skinListener.BufferUpdate();
-
-				_fpsProcessedAnalyser.Tick();
 			}catch(Exception e) {e.printStackTrace();}
-
 		}
 
 	}
-
-
 
 
 	ArrayDeque<float[]> rawBuffers = new ArrayDeque<float[]>();
@@ -162,6 +130,22 @@ public class SkinProcessor
 			result[i] = MUtils.Map(MUtils.Clamp(buffer[i], min, max), min, max, 0, 255);
 
 		return result;
+	}
+
+
+	@Override
+	protected void Process() {
+		ProcessBuffer();
+	}
+	
+	@Override
+	protected void Sleep() {
+		try {
+			Thread.sleep(ProcessingConfig.SleepingTime);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		super.Sleep();
 	}
 }
 

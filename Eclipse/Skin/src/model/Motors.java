@@ -1,8 +1,9 @@
 package model;
 
 import java.io.Serializable;
+import java.util.concurrent.atomic.AtomicReference;
 
-public class Motors
+public class Motors extends ThreadProcess
 {
 	public static class MotorsConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
@@ -15,6 +16,7 @@ public class Motors
 		public int DeviationUniform = 60;
 		public float NormalisationFactorGaussian = 1;
 		public float NormalisationFactorUniform = 1;
+		public long SleepingTime = 0;
 
 		public MotorsConfiguration() {}
 
@@ -27,36 +29,35 @@ public class Motors
 			DeviationUniform = m.DeviationUniform;
 			NormalisationFactorGaussian = m.NormalisationFactorGaussian;
 			NormalisationFactorUniform = m.NormalisationFactorUniform;
+			SleepingTime = m.SleepingTime;
 		}
-
-
-
 	}
 
 	@SuppressWarnings("serial")
 	public static class MemoryException extends Exception{	};
 
 	private MotorsConfiguration _motorsConfig;
+	
 
-	public float[] OutputBuffer;
+	public AtomicReference<float[]> GaussianOutputBuffer = new AtomicReference<>();
+	public AtomicReference<float[]> UniformOutputBuffer = new AtomicReference<>();
 
-	public float[] InputBuffer;
+	public AtomicReference<float[]> InputBuffer = new AtomicReference<>();
 
 	public float[][] GaussianConvolBuffers;
 	public float[][] UniformAverageConvolBuffers;
-
-
+	
 
 	public Motors(MotorsConfiguration motorsConfig)
 	{
 		_motorsConfig = motorsConfig;
 
-		OutputBuffer = new float[_motorsConfig.OutputCol * _motorsConfig.OutputRow];
 		ComputeGaussianConvolBuffers();
 		ComputeUniformAverageConvolBuffers();
 	}
-
-	public void ComputeGaussianConvolBuffers()
+	
+	
+	private void ComputeGaussianConvolBuffers()
 	{
 		GaussianConvolBuffers = new float[_motorsConfig.OutputCol * _motorsConfig.OutputRow][ _motorsConfig.InputCol * _motorsConfig.InputRow];
 
@@ -79,7 +80,7 @@ public class Motors
 		return MUtils.TwoDToOneD(result);
 	}
 
-	public void ComputeUniformAverageConvolBuffers()
+	private void ComputeUniformAverageConvolBuffers()
 	{
 		UniformAverageConvolBuffers = new float[_motorsConfig.OutputCol * _motorsConfig.OutputRow][ _motorsConfig.InputCol * _motorsConfig.InputRow];
 
@@ -107,8 +108,10 @@ public class Motors
 
 
 
-	public void CalculateGaussianOutput() throws MemoryException
+	private void CalculateGaussianOutput() throws MemoryException
 	{
+		float[] InputBufferTmp = InputBuffer.get();
+		float[] OutputBufferTmp = new float[_motorsConfig.OutputCol * _motorsConfig.OutputRow];
 
 		try {
 			for (int i = 0; i < GaussianConvolBuffers.length; i++)
@@ -116,31 +119,52 @@ public class Motors
 				float sum = 0;
 
 				for (int j = 0; j < _motorsConfig.InputCol * _motorsConfig.InputRow; j++)
-					sum += GaussianConvolBuffers[i][j] * InputBuffer[j];
+					sum += GaussianConvolBuffers[i][j] * InputBufferTmp[j];
 
-				OutputBuffer[i] = Math.min(sum, 255);
+				OutputBufferTmp[i] = Math.min(sum, 255);
 			}
+			
+			GaussianOutputBuffer.set(OutputBufferTmp);
 		}catch(Exception e) {throw new MemoryException();}
 
 	}
 
-	public void CalculateUniformAverageOutput() throws MemoryException
+	private void CalculateUniformAverageOutput() throws MemoryException
 	{
+		float[] InputBufferTmp = InputBuffer.get();
+		float[] OutputBufferTmp = new float[_motorsConfig.OutputCol * _motorsConfig.OutputRow];
+
 		try {			
 			for (int i = 0; i < UniformAverageConvolBuffers.length; i++)
 			{
 				float sum = 0;
 				for (int j = 0; j < _motorsConfig.InputCol * _motorsConfig.InputRow; j++)
-					sum += UniformAverageConvolBuffers[i][j] * InputBuffer[j];
+					sum += UniformAverageConvolBuffers[i][j] * InputBufferTmp[j];
 
-				OutputBuffer[i] = Math.min(sum, 255);
+				OutputBufferTmp[i] = Math.min(sum, 255);
 			}
+			
+			UniformOutputBuffer.set(OutputBufferTmp);
 		}catch(Exception e) {throw new MemoryException();}
 	}
 
-	public float[] GetOutputBuffer()
-	{
-		return OutputBuffer;
-	}
 
+	@Override
+	protected void Process() {
+		try {
+			CalculateGaussianOutput();
+			CalculateUniformAverageOutput();
+		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
+		
+	}
+	
+	@Override
+	protected void Sleep() {
+		try {
+			Thread.sleep(_motorsConfig.SleepingTime);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		super.Sleep();
+	}
 }

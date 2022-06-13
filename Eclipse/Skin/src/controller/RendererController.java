@@ -16,7 +16,6 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import model.FPSAnalyser;
-import model.ISkinListener;
 import model.Motors;
 import model.Motors.MotorsConfiguration;
 import model.NaiveInterpolation;
@@ -26,13 +25,13 @@ import model.SkinProcessor.ProcessingConfiguration;
 import model.SkinSerialPort;
 import model.SkinSerialPort.SerialConfiguration;
 
-public class RendererController implements UserConfigurationManager.UserObserver, ISkinListener{
+public class RendererController implements UserConfigurationManager.UserObserver{
 
 	private Stage _window;
 	private Runnable _onExit;
 	private int _minWidth = 700;
 	private int _minHeight = 300;
-	
+
 	@FXML
 	private Label drawingFPS;
 
@@ -82,7 +81,6 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private ProcessingConfiguration _processingConfig;
 	private MotorsConfiguration _motorsConfig;
 
-	private FPSAnalyser _fpsMotorsAnalyser = new FPSAnalyser();
 	private FPSAnalyser _fpsDrawingAnalyser = new FPSAnalyser();
 
 	public RendererController(String title, int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig, Runnable onExit) {
@@ -90,7 +88,14 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		LaunchWindow(title);
 
 		_skinProcessor = new SkinProcessor();
-		_skinProcessor.Register(this);
+		_skinProcessor.Register(() -> {
+			try {
+				_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+						_skinProcessor.RawBuffer.get(), _processingConfig.ResizeFactor, _processingConfig.ResizeFactor,  _processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
+			} catch(NullPointerException e) {}
+			_inputProcessedBufferRef.set(_skinProcessor.ProcessedBuffer.get());
+		});
+
 		_skinSerialPort = new SkinSerialPort(_skinProcessor, COM, serialConfig);
 
 		ProcessingConfigurationUpdated(processingConfig);
@@ -104,26 +109,21 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				TryPrintBuffer(_inputProcessedBufferRef, inputProcessed, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
 				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
 				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
-				
-				rawSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetRawFPS() + " Hz");
-				processedSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetProcessedFPS() + " Hz");
-				motorsGaussianFPS.setText("Refresh rate : " + (int) _fpsMotorsAnalyser.GetFPS()*2 + " Hz");
-				motorsUniformFPS.setText("Refresh rate : " + (int) _fpsMotorsAnalyser.GetFPS()*2 + " Hz");
-				drawingFPS.setText("Drawing rate : " + (int) _fpsDrawingAnalyser.GetFPS() + " fps");
-				
+
+				try {
+					rawSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetRawFPS() + " Hz");
+					processedSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetProcessFPS() + " Hz");
+					motorsGaussianFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
+					motorsUniformFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
+					drawingFPS.setText("Drawing rate : " + (int) _fpsDrawingAnalyser.GetFPS() + " fps");
+				} catch(NullPointerException e) {}
+
 				_fpsDrawingAnalyser.Tick();
 			}
 
 		}.start();
 
-		Thread motorsProcessingThread = new Thread(() -> {
-			while(true)
-				ProcessMotors();
-		});
-
-		motorsProcessingThread.setDaemon(true);
-		motorsProcessingThread.start();
-
+		_skinProcessor.StartThread();
 		_skinSerialPort.StartReading();
 	}
 
@@ -143,7 +143,11 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 			_window.setScene(scene);
 
-			_window.setOnCloseRequest(e -> {_skinSerialPort.StopReading(); _onExit.run();});
+			_window.setOnCloseRequest(e -> {
+				_motors.StopThread();
+				_skinProcessor.StopThread();
+				_skinSerialPort.StopReading(); 
+				_onExit.run();});
 
 
 			_window.show();
@@ -153,32 +157,31 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		}
 	}
 
-	@Override
-	public void BufferUpdate() {
-		_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-				_skinProcessor.RawBuffer.get(), _processingConfig.ResizeFactor, _processingConfig.ResizeFactor,  _processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
-		_inputProcessedBufferRef.set(_skinProcessor.ProcessedBuffer.get());
-	}
+	int _lastId = 0;
+	private void instantiateMotors(int id) {
+		if(_motors != null)
+			_motors.StopThread();
 
+		Motors m = new Motors(_motorsConfig);
+		m.Register(() -> {
+			try {
+				_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+						m.GaussianOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
-	private void ProcessMotors() {
-		try {
-			_motors.InputBuffer = _skinProcessor.ProcessedBuffer.get();
+				_outputUniformAverageBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+						m.UniformOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
-			_motors.CalculateGaussianOutput();
+			} catch(NullPointerException e) {}
+			_motors.InputBuffer.set(_skinProcessor.ProcessedBuffer.get());
+		});
 
-			_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-					_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
-
-			_motors.CalculateUniformAverageOutput();
-			
-			_outputUniformAverageBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-					_motors.OutputBuffer, _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
-
-			_fpsMotorsAnalyser.Tick();
-
-		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
-
+		
+		synchronized (this) {
+			if(_lastId == id) {
+				m.StartThread();
+				_motors = m;
+			}	
+		}
 	}
 
 
@@ -213,7 +216,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_outputMotorsImageRow = userConfig.OutputRow * _resizeFactorMotorsImageRow;
 
 
-		new Thread(()-> _motors = new Motors(userConfig)).start();
+		new Thread(()-> instantiateMotors(++_lastId)).start();
 
 		_window.setMinWidth(Math.max(_processingConfig.ProcessedBufferCol()*2 + _outputMotorsImageCol*2 + 200, _minWidth));
 		_window.setMinHeight(Math.max(Math.max(_processingConfig.ProcessedBufferRow(), _outputMotorsImageRow) + 200, _minHeight));
@@ -242,7 +245,5 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private void onLaunchCalibration() {
 		_skinSerialPort.Send("c");
 	}
-
-
 
 }
