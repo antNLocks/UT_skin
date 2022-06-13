@@ -20,7 +20,7 @@ public class SkinSerialPort
 		
 		public int BufferSize = 36;
 		public int ByteSeparator = 0x00;
-		public int Baudrate = 230400;
+		public int Baudrate = 250000;
 		public int HardwareGain = 2;
 		
 		public SerialConfiguration(SerialConfiguration s) {

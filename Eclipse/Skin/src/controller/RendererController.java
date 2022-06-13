@@ -29,6 +29,7 @@ import model.SkinSerialPort.SerialConfiguration;
 public class RendererController implements UserConfigurationManager.UserObserver, ISkinListener{
 
 	private Stage _window;
+	private Runnable _onExit;
 	private int _minWidth = 700;
 	private int _minHeight = 300;
 	
@@ -84,8 +85,9 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private FPSAnalyser _fpsMotorsAnalyser = new FPSAnalyser();
 	private FPSAnalyser _fpsDrawingAnalyser = new FPSAnalyser();
 
-	public RendererController(int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig) {
-		LaunchWindow();
+	public RendererController(String title, int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig, Runnable onExit) {
+		_onExit = onExit;
+		LaunchWindow(title);
 
 		_skinProcessor = new SkinProcessor();
 		_skinProcessor.Register(this);
@@ -103,10 +105,10 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
 				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
 				
-				rawSignalFPS.setText((int) _skinProcessor.GetRawFPS() + " fps");
-				processedSignalFPS.setText((int) _skinProcessor.GetProcessedFPS() + " fps");
-				motorsGaussianFPS.setText((int) _fpsMotorsAnalyser.GetFPS()*2 + " fps");
-				motorsUniformFPS.setText((int) _fpsMotorsAnalyser.GetFPS()*2 + " fps");
+				rawSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetRawFPS() + " Hz");
+				processedSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetProcessedFPS() + " Hz");
+				motorsGaussianFPS.setText("Refresh rate : " + (int) _fpsMotorsAnalyser.GetFPS()*2 + " Hz");
+				motorsUniformFPS.setText("Refresh rate : " + (int) _fpsMotorsAnalyser.GetFPS()*2 + " Hz");
 				drawingFPS.setText("Drawing rate : " + (int) _fpsDrawingAnalyser.GetFPS() + " fps");
 				
 				_fpsDrawingAnalyser.Tick();
@@ -127,7 +129,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 
 
-	private void LaunchWindow() {
+	private void LaunchWindow(String title) {
 		try {
 			FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("Renderer.fxml"));
 			loader.setController(this);
@@ -136,12 +138,12 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			Scene scene = new Scene(root,10,10);
 
 			_window = new Stage();
-			_window.setTitle("Renderer");
+			_window.setTitle(title);
 			_window.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("al.png")));
 
 			_window.setScene(scene);
 
-			_window.setOnCloseRequest(e -> _skinSerialPort.StopReading());
+			_window.setOnCloseRequest(e -> {_skinSerialPort.StopReading(); _onExit.run();});
 
 
 			_window.show();

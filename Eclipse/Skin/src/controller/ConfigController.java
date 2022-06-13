@@ -1,5 +1,6 @@
 package controller;
 
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 import com.fazecast.jSerialComm.SerialPort;
@@ -10,6 +11,8 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
@@ -17,6 +20,12 @@ import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
 import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
+import java.io.File;
+import java.io.IOException;
+
 import model.UserConfigurationManager;
 import model.Motors.MotorsConfiguration;
 import model.SkinProcessor.ProcessingConfiguration;
@@ -24,18 +33,23 @@ import model.SkinSerialPort.SerialConfiguration;
 
 public class ConfigController implements UserConfigurationManager.UserObserver {
 
-	private UserConfigurationManager _userConfigManager = new UserConfigurationManager();
+	private ArrayList<UserConfigurationManager> _userConfigManagers = new ArrayList<>();
+	private ObservableList<String> _userConfigManagersView;
+
+	private String _fileArg = null;
 
 	@FXML 
 	private ChoiceBox<String> COM;
 	private ObservableList<String> _ports;
-
 
 	@FXML
 	private ToggleGroup averageAlgo;
 
 	@FXML
 	private ChoiceBox<Integer> baudrateCB;
+
+	@FXML
+	private ChoiceBox<String> configurationCB;
 
 	@FXML
 	private Button connectAndRender;
@@ -60,10 +74,10 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	@FXML
 	private Label gaussianNormalisationFactorView;
-	
+
 	@FXML
 	private Slider hardwareGainSlider;
-	
+
 	@FXML
 	private Label hardwareGainView;
 
@@ -132,25 +146,25 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 
 	private ChangeListener<Number> processingConfigSliderListener = (observable, oldValue, newValue) -> {
-		ProcessingConfiguration config = _userConfigManager.GetProcessingConfiguration();
+		ProcessingConfiguration config = GetUserConfigManager().GetProcessingConfiguration();
 
 		config.MinThreshold = (int)	minThresholdSlider.getValue();
 		config.MaxThreshold = (int)	maxThresholdSlider.getValue();
 		config.Noise_framesForAverage = (int) framesForAverageSlider.getValue();
 		config.Noise_interpolationFactor = (float) interpolationFactorSlider.getValue();
 
-		_userConfigManager.SetProcessingConfiguration(config);
+		GetUserConfigManager().SetProcessingConfiguration(config);
 	};
 
 	private ChangeListener<Number> motorsConfigSliderListener = (observable, oldValue, newValue) -> {
-		MotorsConfiguration config = _userConfigManager.GetMotorsConfiguration();
+		MotorsConfiguration config = GetUserConfigManager().GetMotorsConfiguration();
 
 		config.DeviationGaussian = (int) gaussianDeviationSlider.getValue();
 		config.DeviationUniform = (int) uniformDeviationSlider.getValue();
 		config.NormalisationFactorGaussian = (float) gaussianNormalisationFactorSlider.getValue();
 		config.NormalisationFactorUniform = (float) uniformNormalisationFactorSlider.getValue();
 
-		_userConfigManager.SetMotorsConfiguration(config);
+		GetUserConfigManager().SetMotorsConfiguration(config);
 	};
 
 	private class NumericTFListener implements ChangeListener<String> {
@@ -181,30 +195,28 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		}
 	};
 
+	private ChangeListener<String> configChangeListener = (observable, oldValue, newValue) -> {
+		UpdateUI(GetUserConfigManager());
+		connectAndRender.setDisable(!configurationCB.getValue().equalsIgnoreCase("New Config"));
+	};
+	
+	public ConfigController(String fileArg) { _fileArg = fileArg;	}
+
 	@FXML
 	private void initialize() {
-		ProcessingConfiguration _processingConfig = new ProcessingConfiguration();
-		MotorsConfiguration _motorsConfig = new MotorsConfiguration();
-		_motorsConfig.InputCol = _processingConfig.ProcessedBufferCol();
-		_motorsConfig.InputRow = _processingConfig.ProcessedBufferRow();
-		SerialConfiguration serialConfig = new SerialConfiguration();
+		_userConfigManagersView = FXCollections.observableArrayList();
 
-		_userConfigManager.AddObserver(this);
-		_userConfigManager.SetProcessingConfiguration(_processingConfig);
-		_userConfigManager.SetMotorsConfiguration(_motorsConfig);
-		_userConfigManager.SetSerialConfiguration(serialConfig);
+		CreateNewConfigurationManager();
+		UpdateUI(GetUserConfigManager());
 
-		_ports = FXCollections.observableArrayList();
-
-		for (SerialPort port: SerialPort.getCommPorts()) 
-			_ports.add(port.getSystemPortName());
-
-		COM.setItems(_ports);
-		COM.setValue(_ports.get(0));
+		onRefreshCOM();
 
 		baudrateCB.setItems(FXCollections.observableArrayList(9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000));
 
 		Bind();
+		
+		if(_fileArg != null) 
+			Platform.runLater(() -> Load(new File(_fileArg)));
 	}
 
 
@@ -216,21 +228,21 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		interpolationFactorSlider.valueProperty().addListener(processingConfigSliderListener);
 
 		averageAlgo.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
-			ProcessingConfiguration config = _userConfigManager.GetProcessingConfiguration();
+			ProcessingConfiguration config = GetUserConfigManager().GetProcessingConfiguration();
 			config.Noise_averageAlgo = rollingAverageT.isSelected() ? 0 : 1;
-			_userConfigManager.SetProcessingConfiguration(config);
+			GetUserConfigManager().SetProcessingConfiguration(config);
 		});
 
 		resizeFactorSLider.valueProperty().addListener((observable, oldValue, newValue) -> {
-			ProcessingConfiguration processingConfig = _userConfigManager.GetProcessingConfiguration();
-			MotorsConfiguration motorsConfig = _userConfigManager.GetMotorsConfiguration();
+			ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
+			MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
 
 			processingConfig.ResizeFactor = (int) resizeFactorSLider.getValue();
 			motorsConfig.InputCol = processingConfig.ProcessedBufferCol();
 			motorsConfig.InputRow = processingConfig.ProcessedBufferRow();
 
-			_userConfigManager.SetProcessingConfiguration(processingConfig);
-			_userConfigManager.SetMotorsConfiguration(motorsConfig);			
+			GetUserConfigManager().SetProcessingConfiguration(processingConfig);
+			GetUserConfigManager().SetMotorsConfiguration(motorsConfig);			
 		});
 
 		gaussianDeviationSlider.valueProperty().addListener(motorsConfigSliderListener);
@@ -240,119 +252,242 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		frameSeparatorByteTF.textProperty().addListener(new NumericTFListener(
 				frameSeparatorByteTF, "^(0x)?((\\d|[a-f]|[A-F])?){2}$", "^(0x)?(\\d|[a-f]|[A-F]){2}$", (newValue) -> {
-					SerialConfiguration serialConfig = _userConfigManager.GetSerialConfiguration();
+					SerialConfiguration serialConfig = GetUserConfigManager().GetSerialConfiguration();
 					serialConfig.ByteSeparator = Integer.parseInt(newValue.subSequence(newValue.length()-2, newValue.length()).toString(), 16);
-					Platform.runLater(() -> _userConfigManager.SetSerialConfiguration(serialConfig));
+					Platform.runLater(() -> GetUserConfigManager().SetSerialConfiguration(serialConfig));
 				}));
 
 		frameSeparatorByteTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				frameSeparatorByteTF.setText(String.format("0x%02X", _userConfigManager.GetSerialConfiguration().ByteSeparator));
+				frameSeparatorByteTF.setText(String.format("0x%02X", GetUserConfigManager().GetSerialConfiguration().ByteSeparator));
 				frameSeparatorByteTF.setStyle(VALID_STYLE);
 			}
 		});
 
 		baudrateCB.valueProperty().addListener((observable, oldValue, newValue) -> {
-			SerialConfiguration config = _userConfigManager.GetSerialConfiguration();
+			SerialConfiguration config = GetUserConfigManager().GetSerialConfiguration();
 			config.Baudrate = baudrateCB.getValue();
-			_userConfigManager.SetSerialConfiguration(config);
+			GetUserConfigManager().SetSerialConfiguration(config);
 		});
 
 		rawColTF.textProperty().addListener(new NumericTFListener(
 				rawColTF, "^(\\d?){3}$", "^\\d{1,3}$", (newValue) -> {
-					SerialConfiguration serialConfig = _userConfigManager.GetSerialConfiguration();
-					ProcessingConfiguration processingConfig = _userConfigManager.GetProcessingConfiguration();
-					MotorsConfiguration motorsConfig = _userConfigManager.GetMotorsConfiguration();
+					SerialConfiguration serialConfig = GetUserConfigManager().GetSerialConfiguration();
+					ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
+					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
 
 					processingConfig.RawBufferCol = Integer.parseInt(newValue);
 					serialConfig.BufferSize = processingConfig.RawBufferCol*processingConfig.RawBufferRow;
 					motorsConfig.InputCol = processingConfig.ProcessedBufferCol();
 
 					Platform.runLater(() -> {
-						_userConfigManager.SetSerialConfiguration(serialConfig);
-						_userConfigManager.SetProcessingConfiguration(processingConfig);
-						_userConfigManager.SetMotorsConfiguration(motorsConfig);
+						GetUserConfigManager().SetSerialConfiguration(serialConfig);
+						GetUserConfigManager().SetProcessingConfiguration(processingConfig);
+						GetUserConfigManager().SetMotorsConfiguration(motorsConfig);
 					});
 				}));
 
 		rawColTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				rawColTF.setText(Integer.toString(_userConfigManager.GetProcessingConfiguration().RawBufferCol));
+				rawColTF.setText(Integer.toString(GetUserConfigManager().GetProcessingConfiguration().RawBufferCol));
 				rawColTF.setStyle(VALID_STYLE);
 			}
 		});
 
 		rawRowTF.textProperty().addListener(new NumericTFListener(
 				rawRowTF, "^(\\d?){3}$", "^\\d{1,3}$", (newValue) -> {
-					SerialConfiguration serialConfig = _userConfigManager.GetSerialConfiguration();
-					ProcessingConfiguration processingConfig = _userConfigManager.GetProcessingConfiguration();
-					MotorsConfiguration motorsConfig = _userConfigManager.GetMotorsConfiguration();
+					SerialConfiguration serialConfig = GetUserConfigManager().GetSerialConfiguration();
+					ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
+					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
 
 					processingConfig.RawBufferRow = Integer.parseInt(newValue);
 					serialConfig.BufferSize = processingConfig.RawBufferCol*processingConfig.RawBufferRow;
 					motorsConfig.InputRow = processingConfig.ProcessedBufferRow();
 
 					Platform.runLater(() -> {
-						_userConfigManager.SetSerialConfiguration(serialConfig);
-						_userConfigManager.SetProcessingConfiguration(processingConfig);
-						_userConfigManager.SetMotorsConfiguration(motorsConfig);
+						GetUserConfigManager().SetSerialConfiguration(serialConfig);
+						GetUserConfigManager().SetProcessingConfiguration(processingConfig);
+						GetUserConfigManager().SetMotorsConfiguration(motorsConfig);
 					});
 				}));
 
 		rawRowTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				rawRowTF.setText(Integer.toString(_userConfigManager.GetProcessingConfiguration().RawBufferRow));
+				rawRowTF.setText(Integer.toString(GetUserConfigManager().GetProcessingConfiguration().RawBufferRow));
 				rawRowTF.setStyle(VALID_STYLE);
 			}
 		});
 
 		motorsColTF.textProperty().addListener(new NumericTFListener(
 				motorsColTF, "^(\\d?){2}$", "^\\d{1,2}$", (newValue) -> {
-					MotorsConfiguration motorsConfig = _userConfigManager.GetMotorsConfiguration();
+					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
 					motorsConfig.OutputCol = Integer.parseInt(newValue);
-					Platform.runLater(() -> _userConfigManager.SetMotorsConfiguration(motorsConfig));
+					Platform.runLater(() -> GetUserConfigManager().SetMotorsConfiguration(motorsConfig));
 				}));
-		
+
 		motorsColTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				motorsColTF.setText(Integer.toString(_userConfigManager.GetMotorsConfiguration().OutputCol));
+				motorsColTF.setText(Integer.toString(GetUserConfigManager().GetMotorsConfiguration().OutputCol));
 				motorsColTF.setStyle(VALID_STYLE);
 			}
 		});
-		
+
 		motorsRowTF.textProperty().addListener(new NumericTFListener(
 				motorsRowTF, "^(\\d?){2}$", "^\\d{1,2}$", (newValue) -> {
-					MotorsConfiguration motorsConfig = _userConfigManager.GetMotorsConfiguration();
+					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
 					motorsConfig.OutputRow = Integer.parseInt(newValue);
-					Platform.runLater(() -> _userConfigManager.SetMotorsConfiguration(motorsConfig));
+					Platform.runLater(() -> GetUserConfigManager().SetMotorsConfiguration(motorsConfig));
 				}));
-		
+
 		motorsRowTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				motorsRowTF.setText(Integer.toString(_userConfigManager.GetMotorsConfiguration().OutputRow));
+				motorsRowTF.setText(Integer.toString(GetUserConfigManager().GetMotorsConfiguration().OutputRow));
 				motorsRowTF.setStyle(VALID_STYLE);
 			}
 		});
-		
+
 		hardwareGainSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-			SerialConfiguration config = _userConfigManager.GetSerialConfiguration();
+			SerialConfiguration config = GetUserConfigManager().GetSerialConfiguration();
 			config.HardwareGain = (int) hardwareGainSlider.getValue();
-			_userConfigManager.SetSerialConfiguration(config);
+			GetUserConfigManager().SetSerialConfiguration(config);
 		});
 
+		configurationCB.valueProperty().addListener(configChangeListener);
+	}
+
+	private void CreateNewConfigurationManager() {
+		ProcessingConfiguration _processingConfig = new ProcessingConfiguration();
+		MotorsConfiguration _motorsConfig = new MotorsConfiguration();
+		_motorsConfig.InputCol = _processingConfig.ProcessedBufferCol();
+		_motorsConfig.InputRow = _processingConfig.ProcessedBufferRow();
+		SerialConfiguration serialConfig = new SerialConfiguration();
+
+		UserConfigurationManager configManager = new UserConfigurationManager();
+
+		configManager.SetProcessingConfiguration(_processingConfig);
+		configManager.SetMotorsConfiguration(_motorsConfig);
+		configManager.SetSerialConfiguration(serialConfig);
+		configManager.AddObserver(this);
+
+		if(_userConfigManagers.size() > 0) {
+			_userConfigManagersView.set(_userConfigManagersView.size() - 1, "Config " + COM.getValue());
+			configurationCB.setValue("Config " + COM.getValue());
+		}
+
+		_userConfigManagersView.add("New config");
+		_userConfigManagers.add(configManager);
+
+		configurationCB.setItems(_userConfigManagersView);
+
+		if(_userConfigManagers.size() == 1)
+			configurationCB.setValue(_userConfigManagersView.get(0));
+	}
+
+	private void UpdateUI(UserConfigurationManager config) {
+		ProcessingConfigurationUpdated(config.GetProcessingConfiguration());
+		SerialConfigurationUpdated(config.GetSerialConfiguration());
+		MotorsConfigurationUpdated(config.GetMotorsConfiguration());
 	}
 
 
 	@FXML
-	private void onConnectAndRender() {
-		RendererController _renderController = new RendererController(_ports.indexOf(COM.getValue()),
-				_userConfigManager.GetProcessingConfiguration(),
-				_userConfigManager.GetMotorsConfiguration(),
-				_userConfigManager.GetSerialConfiguration());
+	private void onRender() {
+		final String configManagerName = "Config " + COM.getValue();
 
-		_userConfigManager.AddObserver(_renderController);	
+		RendererController _renderController = new RendererController("Renderer - "+ configManagerName,
+				_ports.indexOf(COM.getValue()),
+				GetUserConfigManager().GetProcessingConfiguration(),
+				GetUserConfigManager().GetMotorsConfiguration(),
+				GetUserConfigManager().GetSerialConfiguration(),
+				() -> {
+					if(configurationCB.getValue().equalsIgnoreCase(configManagerName)) {
+						configurationCB.setValue("New config");
+						configChangeListener.changed(null, null, null);
+					}
+
+					int configManagerIndex = _userConfigManagersView.indexOf(configManagerName);
+					_userConfigManagers.remove(configManagerIndex);
+					_userConfigManagersView.remove(configManagerIndex);
+				});
+
+		GetUserConfigManager().AddObserver(_renderController);
+
+		CreateNewConfigurationManager();
 	}
 
+	@FXML
+	private void onRefreshCOM() {
+		_ports = FXCollections.observableArrayList();
+
+		for (SerialPort port: SerialPort.getCommPorts()) 
+			_ports.add(port.getSystemPortName());
+
+		COM.setItems(_ports);
+
+		if(_ports.size() > 0 && COM.getValue() == null)
+			COM.setValue(_ports.get(0));
+	}
+
+	@FXML
+	private void onSaveConfig() {
+		Stage s = (Stage) COM.getScene().getWindow();
+
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.setTitle("Save configuration");
+		fileChooser.getExtensionFilters().addAll(
+				new ExtensionFilter("Config Files", "*.noc"),
+				new ExtensionFilter("All Files", "*.*"));
+		File selectedFile = fileChooser.showSaveDialog(s);
+
+		if (selectedFile != null)
+			try {
+				GetUserConfigManager().Save(selectedFile);
+			} catch (IOException e) {
+				Alert alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Save Error");
+				alert.setHeaderText("Unable to save this configuration");
+				alert.setContentText("Maybe the location of the file no longer exists.");
+				
+				s.setAlwaysOnTop(false);
+				alert.showAndWait();
+				s.setAlwaysOnTop(true);
+				e.printStackTrace();
+			}
+	}
+
+	@FXML
+	private void onLoadConfig() {
+		Stage s = (Stage) COM.getScene().getWindow();
+
+		FileChooser fileChooser = new FileChooser();
+		fileChooser.getExtensionFilters().addAll(
+				new ExtensionFilter("Config Files", "*.noc"),
+				new ExtensionFilter("All Files", "*.*"));
+		Load(fileChooser.showOpenDialog(s));
+	}
+	
+	private void Load(File f) {
+		Stage s = (Stage) COM.getScene().getWindow();
+
+		if (f != null)
+			try {
+				GetUserConfigManager().Load(f);
+			} catch (IOException e) {
+				Alert alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Load Error");
+				alert.setHeaderText("Unable to read this configuration file");
+				alert.setContentText("Maybe this file cannot be read.\nOr it is not compatible with this version of the software.");
+				
+				s.setAlwaysOnTop(false);
+				alert.showAndWait();
+				s.setAlwaysOnTop(true);
+				e.printStackTrace();
+			}
+	}
+
+	private UserConfigurationManager GetUserConfigManager() {
+		return _userConfigManagers.get(_userConfigManagersView.indexOf(configurationCB.getValue()));
+	}
 
 
 	@Override
@@ -400,10 +535,10 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		uniformNormalisationFactorView.setText(String.format("%1.1f", userConfig.NormalisationFactorUniform));
 		uniformNormalisationFactorSlider.setValue(userConfig.NormalisationFactorUniform);
-		
+
 		motorsColTF.setText(Integer.toString(userConfig.OutputCol));
 		motorsColTF.setStyle(VALID_STYLE);
-		
+
 		motorsRowTF.setText(Integer.toString(userConfig.OutputRow));
 		motorsRowTF.setStyle(VALID_STYLE);
 	}
@@ -415,7 +550,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		frameSeparatorByteTF.setText(String.format("0x%02X", userConfig.ByteSeparator));
 		frameSeparatorByteTF.setStyle(VALID_STYLE);
 		baudrateCB.setValue(userConfig.Baudrate);
-		
+
 		hardwareGainView.setText(Integer.toString(userConfig.HardwareGain));
 		hardwareGainSlider.setValue(userConfig.HardwareGain);
 	}

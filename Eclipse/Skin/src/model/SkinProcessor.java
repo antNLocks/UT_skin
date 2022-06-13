@@ -91,18 +91,20 @@ public class SkinProcessor
 	private void ProcessBuffer()
 	{
 		if(RawBuffer.get() != null) {
-			float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
-					AverageBufferOverTime_rollingAverage(RawBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
-						AverageBufferOverTime_interpolationPreviousFrames(RawBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
-			float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactor, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
-			float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
+			try {
+				float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
+						AverageBufferOverTime_rollingAverage(RawBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
+							AverageBufferOverTime_interpolationPreviousFrames(RawBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
+				float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactor, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
+				float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
 
-			ProcessedBuffer.set(thresholdMappedBuffer);
-			
-			for (ISkinListener skinListener : _skinListeners)
-				skinListener.BufferUpdate();
+				ProcessedBuffer.set(thresholdMappedBuffer);
 
-			_fpsProcessedAnalyser.Tick();
+				for (ISkinListener skinListener : _skinListeners)
+					skinListener.BufferUpdate();
+
+				_fpsProcessedAnalyser.Tick();
+			}catch(Exception e) {e.printStackTrace();}
 
 		}
 

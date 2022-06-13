@@ -16,7 +16,7 @@ int rawBufferCalibration[252];
 byte rawBuffer[252];
 
 void setup() {
-  Serial.begin(230400);
+  Serial.begin(250000);
 
   muca.init();
   muca.useRawData(true); // If you use the raw data, the interrupt is not working

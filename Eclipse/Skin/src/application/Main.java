@@ -1,5 +1,6 @@
 package application;
 	
+import controller.ConfigController;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -10,27 +11,45 @@ import javafx.scene.image.Image;
 
 
 public class Main extends Application {
+	static String fileArg = null;
 	
 	@Override
 	public void start(Stage primaryStage) {
 		try {
-			Parent root = FXMLLoader.load(getClass().getClassLoader().getResource("Config.fxml"));
-			Scene scene = new Scene(root,400,650);
+			ConfigController configController = new ConfigController(fileArg);
+			
+			FXMLLoader loader = new FXMLLoader(getClass().getClassLoader().getResource("Config.fxml"));
+			loader.setController(configController);
+			Parent root = loader.load();
+			
+			Scene scene = new Scene(root,400,700);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
-			primaryStage.setAlwaysOnTop(true);
+			primaryStage.setAlwaysOnTop(true);			
+			
 			primaryStage.setTitle("Configuration");
 			primaryStage.setResizable(false);
 			primaryStage.getIcons().add(new Image(getClass().getClassLoader().getResourceAsStream("al.png")));
 
 			primaryStage.setOnCloseRequest(e -> Platform.exit());
 			primaryStage.show();
+			
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public static void main(String[] args) {
+		if(args.length > 0)
+			fileArg = args[0];
+		
 		launch(args);
+
+		
+		
+	
+		
+		
 	}
 }
