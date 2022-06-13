@@ -56,6 +56,25 @@ public class Motors extends ThreadProcess
 		ComputeUniformAverageConvolBuffers();
 	}
 	
+	@Override
+	protected void Process() {
+		try {
+			CalculateGaussianOutput();
+			CalculateUniformAverageOutput();
+		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
+		
+	}
+	
+	@Override
+	protected void Sleep() {
+		try {
+			Thread.sleep(_motorsConfig.SleepingTime);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		super.Sleep();
+	}
+	
 	
 	private void ComputeGaussianConvolBuffers()
 	{
@@ -146,25 +165,5 @@ public class Motors extends ThreadProcess
 			
 			UniformOutputBuffer.set(OutputBufferTmp);
 		}catch(Exception e) {throw new MemoryException();}
-	}
-
-
-	@Override
-	protected void Process() {
-		try {
-			CalculateGaussianOutput();
-			CalculateUniformAverageOutput();
-		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
-		
-	}
-	
-	@Override
-	protected void Sleep() {
-		try {
-			Thread.sleep(_motorsConfig.SleepingTime);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		super.Sleep();
 	}
 }

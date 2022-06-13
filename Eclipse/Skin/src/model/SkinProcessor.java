@@ -49,6 +49,20 @@ public class SkinProcessor extends ThreadProcess
 
 	private FPSAnalyser _fpsRawAnalyser = new FPSAnalyser();
 
+	@Override
+	protected void Process() {
+		ProcessBuffer();
+	}
+	
+	@Override
+	protected void Sleep() {
+		try {
+			Thread.sleep(ProcessingConfig.SleepingTime);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		super.Sleep();
+	}
 
 	public float GetRawFPS() {
 		return _fpsRawAnalyser.GetFPS();
@@ -130,22 +144,6 @@ public class SkinProcessor extends ThreadProcess
 			result[i] = MUtils.Map(MUtils.Clamp(buffer[i], min, max), min, max, 0, 255);
 
 		return result;
-	}
-
-
-	@Override
-	protected void Process() {
-		ProcessBuffer();
-	}
-	
-	@Override
-	protected void Sleep() {
-		try {
-			Thread.sleep(ProcessingConfig.SleepingTime);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		super.Sleep();
 	}
 }
 
