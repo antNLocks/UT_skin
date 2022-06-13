@@ -91,7 +91,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_skinProcessor.Register(() -> {
 			if(_skinProcessor.ProcessedOutputBuffer.get() != null)
 				_inputProcessedBufferRef.set(_skinProcessor.ProcessedOutputBuffer.get());
-			
+
 			_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
 		});
 
@@ -163,32 +163,25 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		}
 	}
 
-	int _lastId = 0;
-	Object lock = new Object();
-	private void instantiateMotors(int id) {
+	private synchronized void instantiateMotors() {
 		if(_motors != null)
 			_motors.StopThread();
 
-		Motors m = new Motors(_motorsConfig);
-		m.Register(() -> {
+
+		_motors = new Motors(_motorsConfig);
+		_motors.Register(() -> {
 			try {
 				_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-						m.GaussianOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
+						_motors.GaussianOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 				_outputUniformAverageBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-						m.UniformOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
+						_motors.UniformOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 			} catch(NullPointerException e) {}
 			_motors.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
 		});
 
-
-		synchronized (lock) {
-			if(_lastId == id) {
-				m.StartThread();
-				_motors = m;
-			}	
-		}
+		_motors.StartThread();		
 	}
 
 
@@ -222,8 +215,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_outputMotorsImageCol = userConfig.OutputCol * _resizeFactorMotorsImageCol ;
 		_outputMotorsImageRow = userConfig.OutputRow * _resizeFactorMotorsImageRow;
 
-
-		new Thread(()-> instantiateMotors(++_lastId)).start();
+		new Thread(()-> instantiateMotors()).start();
 
 		_window.setMinWidth(Math.max(_processingConfig.ProcessedBufferCol()*2 + _outputMotorsImageCol*2 + 200, _minWidth));
 		_window.setMinHeight(Math.max(Math.max(_processingConfig.ProcessedBufferRow(), _outputMotorsImageRow) + 200, _minHeight));

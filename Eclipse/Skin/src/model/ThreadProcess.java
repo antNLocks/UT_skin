@@ -29,10 +29,7 @@ public abstract class ThreadProcess {
 				_loop.run();
 			
 			_onExit.run();
-		}
-		
-		
-		
+		}		
 	}
 
 	private List<IProcessListener> _listeners = new ArrayList<>();
