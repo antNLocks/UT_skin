@@ -9,7 +9,6 @@ public abstract class ThreadProcess {
 	public static interface IProcessListener{
 		/**
 		 * Called after the process is completed and before sleeping.
-		 * @return Want to receive future updates.
 		 */
 		public void ProcessUpdated();
 	}

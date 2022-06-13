@@ -86,15 +86,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	public RendererController(String title, int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig, Runnable onExit) {
 		_onExit = onExit;
 		LaunchWindow(title);
-
-		_skinProcessor = new SkinProcessor();
-		_skinProcessor.Register(() -> {
-			if(_skinProcessor.ProcessedOutputBuffer.get() != null)
-				_inputProcessedBufferRef.set(_skinProcessor.ProcessedOutputBuffer.get());
-
-			_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
-		});
-
+		
 		_skinSerialPort = new SkinSerialPort(COM, serialConfig);
 		_skinSerialPort.Register(() -> {
 			if(_skinSerialPort.RawOutputBuffer.get() != null)
@@ -102,6 +94,14 @@ public class RendererController implements UserConfigurationManager.UserObserver
 						_skinSerialPort.RawOutputBuffer.get(), 
 						_processingConfig.ResizeFactor, _processingConfig.ResizeFactor,
 						_processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
+		});
+
+		_skinProcessor = new SkinProcessor();
+		_skinProcessor.Register(() -> {
+			if(_skinProcessor.ProcessedOutputBuffer.get() != null)
+				_inputProcessedBufferRef.set(_skinProcessor.ProcessedOutputBuffer.get());
+
+			_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
 		});
 
 		ProcessingConfigurationUpdated(processingConfig);
@@ -153,7 +153,8 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				_motors.StopThread();
 				_skinProcessor.StopThread();
 				_skinSerialPort.StopThread(); 
-				_onExit.run();});
+				_onExit.run();
+			});
 
 
 			_window.show();

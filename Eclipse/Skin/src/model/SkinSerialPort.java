@@ -49,7 +49,6 @@ public class SkinSerialPort extends ThreadProcess
 
 		_serialPort = SerialPort.getCommPorts()[COM_index];
 		_serialPort.setBaudRate(_serialConfig.Baudrate);
-		_serialPort.openPort();
 
 		SetGain(_serialConfig.HardwareGain);
 
@@ -87,7 +86,7 @@ public class SkinSerialPort extends ThreadProcess
 	@Override
 	public void StopThread() {
 		super.StopThread();
-		_serialPort.closePort();	//Will likely be the cause of an exception which will be caught
+		_serialPort.closePort();
 	}
 
 	public void SetSerialConfiguration(SerialConfiguration config) {
