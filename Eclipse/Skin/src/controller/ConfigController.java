@@ -176,7 +176,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		config.DeviationUniform = (int) uniformDeviationSlider.getValue();
 		config.NormalisationFactorGaussian = (float) gaussianNormalisationFactorSlider.getValue();
 		config.NormalisationFactorUniform = (float) uniformNormalisationFactorSlider.getValue();
-
+		config.SleepingTime = (long) sleepingTimeMotorsSlider.getValue();
+		
 		GetUserConfigManager().SetMotorsConfiguration(config);
 	};
 
@@ -366,6 +367,9 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		});
 
 		configurationCB.valueProperty().addListener(configChangeListener);
+		
+		sleepingTimeMotorsSlider.valueProperty().addListener(motorsConfigSliderListener);
+		sleepingTimeProcessingSlider.valueProperty().addListener(processingConfigSliderListener);
 	}
 
 	private void CreateNewConfigurationManager() {
@@ -532,7 +536,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		rawColTF.setText(Integer.toString(userConfig.RawBufferCol));
 		rawRowTF.setText(Integer.toString(userConfig.RawBufferRow));
 
-
+		sleepingTimeProcessingSlider.setValue(userConfig.SleepingTime);
+		sleepingTimeProcessingView.setText(Long.toString(userConfig.SleepingTime));
 	}
 
 	@Override
@@ -554,6 +559,9 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		motorsRowTF.setText(Integer.toString(userConfig.OutputRow));
 		motorsRowTF.setStyle(VALID_STYLE);
+		
+		sleepingTimeMotorsSlider.setValue(userConfig.SleepingTime);
+		sleepingTimeMotorsView.setText(Long.toString(userConfig.SleepingTime));
 	}
 
 

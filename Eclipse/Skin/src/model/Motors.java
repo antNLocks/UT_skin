@@ -16,7 +16,7 @@ public class Motors extends ThreadProcess
 		public int DeviationUniform = 60;
 		public float NormalisationFactorGaussian = 1;
 		public float NormalisationFactorUniform = 1;
-		public long SleepingTime = 0;
+		public long SleepingTime = 5;
 
 		public MotorsConfiguration() {}
 

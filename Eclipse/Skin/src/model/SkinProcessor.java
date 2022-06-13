@@ -15,12 +15,12 @@ public class SkinProcessor extends ThreadProcess
 		public int Noise_averageAlgo = 0;
 		public int Noise_framesForAverage = 3;
 		public float Noise_interpolationFactor = 0.1f;
-		public long SleepingTime = 0;
+		public long SleepingTime = 5;
 
 		public  int ResizeFactor = 20;
 
-		public int RawBufferCol = 6;
-		public int RawBufferRow = 6;
+		public int RawBufferCol = 12;
+		public int RawBufferRow = 21;
 		public int ProcessedBufferCol() { return RawBufferCol * ResizeFactor; }
 		public int ProcessedBufferRow() { return RawBufferRow * ResizeFactor; }
 

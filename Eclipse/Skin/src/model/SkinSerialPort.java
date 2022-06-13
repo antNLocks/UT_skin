@@ -18,7 +18,7 @@ public class SkinSerialPort
 
 		private static final long serialVersionUID = 1L;
 		
-		public int BufferSize = 36;
+		public int BufferSize = 252;
 		public int ByteSeparator = 0x00;
 		public int Baudrate = 250000;
 		public int HardwareGain = 2;
