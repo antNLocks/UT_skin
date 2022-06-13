@@ -89,14 +89,20 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 		_skinProcessor = new SkinProcessor();
 		_skinProcessor.Register(() -> {
-			try {
-				_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-						_skinProcessor.RawBuffer.get(), _processingConfig.ResizeFactor, _processingConfig.ResizeFactor,  _processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
-			} catch(NullPointerException e) {}
-			_inputProcessedBufferRef.set(_skinProcessor.ProcessedBuffer.get());
+			if(_skinProcessor.ProcessedOutputBuffer.get() != null)
+				_inputProcessedBufferRef.set(_skinProcessor.ProcessedOutputBuffer.get());
+			
+			_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
 		});
 
-		_skinSerialPort = new SkinSerialPort(_skinProcessor, COM, serialConfig);
+		_skinSerialPort = new SkinSerialPort(COM, serialConfig);
+		_skinSerialPort.Register(() -> {
+			if(_skinSerialPort.RawOutputBuffer.get() != null)
+				_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+						_skinSerialPort.RawOutputBuffer.get(), 
+						_processingConfig.ResizeFactor, _processingConfig.ResizeFactor,
+						_processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
+		});
 
 		ProcessingConfigurationUpdated(processingConfig);
 		MotorsConfigurationUpdated(motorsConfig);
@@ -111,7 +117,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
 
 				try {
-					rawSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetRawFPS() + " Hz");
+					rawSignalFPS.setText("Refresh rate : " + (int) _skinSerialPort.GetProcessFPS() + " Hz");
 					processedSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetProcessFPS() + " Hz");
 					motorsGaussianFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
 					motorsUniformFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
@@ -124,7 +130,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		}.start();
 
 		_skinProcessor.StartThread();
-		_skinSerialPort.StartReading();
+		_skinSerialPort.StartThread();
 	}
 
 
@@ -146,7 +152,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			_window.setOnCloseRequest(e -> {
 				_motors.StopThread();
 				_skinProcessor.StopThread();
-				_skinSerialPort.StopReading(); 
+				_skinSerialPort.StopThread(); 
 				_onExit.run();});
 
 
@@ -158,6 +164,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	}
 
 	int _lastId = 0;
+	Object lock = new Object();
 	private void instantiateMotors(int id) {
 		if(_motors != null)
 			_motors.StopThread();
@@ -172,11 +179,11 @@ public class RendererController implements UserConfigurationManager.UserObserver
 						m.UniformOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 			} catch(NullPointerException e) {}
-			_motors.InputBuffer.set(_skinProcessor.ProcessedBuffer.get());
+			_motors.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
 		});
 
-		
-		synchronized (this) {
+
+		synchronized (lock) {
 			if(_lastId == id) {
 				m.StartThread();
 				_motors = m;

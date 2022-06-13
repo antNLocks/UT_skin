@@ -15,9 +15,9 @@ public class SkinProcessor extends ThreadProcess
 		public int Noise_averageAlgo = 0;
 		public int Noise_framesForAverage = 3;
 		public float Noise_interpolationFactor = 0.1f;
-		public long SleepingTime = 5;
+		public long SleepingTime = 10;
 
-		public  int ResizeFactor = 20;
+		public  int ResizeFactor = 10;
 
 		public int RawBufferCol = 12;
 		public int RawBufferRow = 21;
@@ -43,17 +43,26 @@ public class SkinProcessor extends ThreadProcess
 
 
 	//Public access because I want to be close to the C# version which has { get; private set; }
-	public AtomicReference<float[]> RawBuffer = new AtomicReference<>();
 
-	public AtomicReference<float[]> ProcessedBuffer = new AtomicReference<>();
+	public AtomicReference<float[]> ProcessedOutputBuffer = new AtomicReference<>();
 
-	private FPSAnalyser _fpsRawAnalyser = new FPSAnalyser();
+	public AtomicReference<float[]> RawInputBuffer = new AtomicReference<>();
+
 
 	@Override
 	protected void Process() {
-		ProcessBuffer();
+		try {
+			float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
+					AverageBufferOverTime_rollingAverage(RawInputBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
+						AverageBufferOverTime_interpolationPreviousFrames(RawInputBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
+			float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactor, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
+			float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
+
+			ProcessedOutputBuffer.set(thresholdMappedBuffer);
+
+		}catch(Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
 	}
-	
+
 	@Override
 	protected void Sleep() {
 		try {
@@ -62,36 +71,6 @@ public class SkinProcessor extends ThreadProcess
 			e.printStackTrace();
 		}
 		super.Sleep();
-	}
-
-	public float GetRawFPS() {
-		return _fpsRawAnalyser.GetFPS();
-	}
-
-
-	//Called by _skinSerialPort
-	public void RawBufferUpdate(float[] rawBuffer)
-	{
-		RawBuffer.set(rawBuffer);;
-
-		_fpsRawAnalyser.Tick();
-	}
-
-	private void ProcessBuffer()
-	{
-		if(RawBuffer.get() != null) {
-			try {
-				float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
-						AverageBufferOverTime_rollingAverage(RawBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
-							AverageBufferOverTime_interpolationPreviousFrames(RawBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
-				float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactor, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
-				float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
-
-				ProcessedBuffer.set(thresholdMappedBuffer);
-
-			}catch(Exception e) {e.printStackTrace();}
-		}
-
 	}
 
 
