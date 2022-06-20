@@ -26,7 +26,7 @@ public abstract class ThreadProcess {
 		public void run() {
 			while(_threadRunning)
 				_loop.run();
-			
+
 			_onExit.run();
 		}		
 	}
@@ -45,9 +45,11 @@ public abstract class ThreadProcess {
 
 			_fpsAnalyser.Tick();
 
-			for(IProcessListener listener : _listeners)
+			//If a call to Register or Unregister is done by a listener, _listeners wil be modified, so we cannot iterate over
+			List<IProcessListener> listeners = new ArrayList<>(_listeners); 
+			for(IProcessListener listener : listeners)
 				listener.ProcessUpdated();
-			
+
 			Sleep();
 		});
 

@@ -1,14 +1,21 @@
 package controller;
 
 import java.io.IOException;
+import java.io.OutputStream;
+import java.net.Socket;
 import java.util.concurrent.atomic.AtomicReference;
 
+import application.Main;
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelWriter;
@@ -24,6 +31,7 @@ import model.UserConfigurationManager;
 import model.SkinProcessor.ProcessingConfiguration;
 import model.SkinSerialPort;
 import model.SkinSerialPort.SerialConfiguration;
+import model.ThreadProcess.IProcessListener;
 
 public class RendererController implements UserConfigurationManager.UserObserver{
 
@@ -59,9 +67,15 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	@FXML
 	private Label rawSignalFPS;
 
+	@FXML
+	private Button connectToBHapticsBtn;
+
 	private SkinSerialPort _skinSerialPort;
 	private SkinProcessor _skinProcessor;
 	private Motors _motors;
+
+	private Socket _bhapticsServer = null;
+	private IProcessListener _bhapticsSender = null;
 
 	private AtomicReference<float[]> _inputRawBufferRef = new AtomicReference<>();
 	private AtomicReference<float[]> _inputProcessedBufferRef = new AtomicReference<>();
@@ -86,7 +100,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	public RendererController(String title, int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig, Runnable onExit) {
 		_onExit = onExit;
 		LaunchWindow(title);
-		
+
 		_skinSerialPort = new SkinSerialPort(COM, serialConfig);
 		_skinSerialPort.Register(() -> {
 			if(_skinSerialPort.RawOutputBuffer.get() != null)
@@ -152,7 +166,12 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			_window.setOnCloseRequest(e -> {
 				_motors.StopThread();
 				_skinProcessor.StopThread();
-				_skinSerialPort.StopThread(); 
+				_skinSerialPort.StopThread();
+				if(_bhapticsServer != null)
+					try {
+						_bhapticsServer.close();
+					} catch (IOException e1) { e1.printStackTrace(); }
+
 				_onExit.run();
 			});
 
@@ -181,6 +200,9 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			} catch(NullPointerException e) {}
 			_motors.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
 		});
+
+		if(_bhapticsSender != null)
+			_motors.Register(_bhapticsSender);
 
 		_motors.StartThread();		
 	}
@@ -246,4 +268,62 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_skinSerialPort.Send("c");
 	}
 
+	@FXML
+	private void onConnectToBHaptics() {
+		try{   
+			_bhapticsServer = new Socket((String) null, 51470);  
+
+			OutputStream os = _bhapticsServer.getOutputStream();
+
+			os.write(0xFF);
+			os.write(0xFF); //Just to be sure
+			os.write((byte) (_motorsConfig.SleepingTime + 4)); //Duration of a frame
+
+			for(int j = 0; j < _motorsConfig.OutputRow; j++)
+				for(int i = 0; i < _motorsConfig.OutputCol; i++)
+					os.write((byte) (j*_motorsConfig.OutputCol + i));
+
+			os.write(0xFF);
+			os.flush();
+
+			_bhapticsSender = () -> {
+				float[] output = _motors.GaussianOutputBuffer.get();
+				if(output != null) {
+					try {
+						for(int i = 0; i < output.length; i++) 
+							os.write((byte) ((int) Math.min(254, output[i])));
+
+						os.write(0xFF); //End of frame
+						os.flush();
+					} catch (IOException e) {
+						e.printStackTrace();
+						_motors.Unregister(_bhapticsSender);
+
+						Platform.runLater(() -> {
+							Alert alert = new Alert(AlertType.ERROR);
+							alert.setTitle("Connection Error");
+							alert.setHeaderText("Socket write error");
+							alert.setContentText("The BHapticsSkinServer was closed.\nPlease start the BHaptics Player first, then launch the BHapticsSkinServer and try again.");
+							alert.initOwner(Main.Stage);
+							alert.showAndWait();
+
+							connectToBHapticsBtn.setDisable(false);
+						});
+
+					}
+				}
+
+			};
+			connectToBHapticsBtn.setDisable(true);
+			_motors.Register(_bhapticsSender);
+
+		}catch(Exception e){
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Connection Error");
+			alert.setHeaderText("Unable to connect to the Bhaptics skin server");
+			alert.setContentText("Please start the BHaptics Player first, then launch the BHapticsSkinServer and try again.");
+			alert.initOwner(Main.Stage);
+			alert.show();
+		}  
+	}
 }

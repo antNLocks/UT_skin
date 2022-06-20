@@ -12,9 +12,11 @@ import javafx.scene.image.Image;
 
 public class Main extends Application {
 	static String fileArg = null;
+	public static Stage Stage;
 	
 	@Override
 	public void start(Stage primaryStage) {
+		Stage = primaryStage;
 		try {
 			ConfigController configController = new ConfigController(fileArg);
 			
@@ -44,12 +46,6 @@ public class Main extends Application {
 		if(args.length > 0)
 			fileArg = args[0];
 		
-		launch(args);
-
-		
-		
-	
-		
-		
+		launch(args);		
 	}
 }

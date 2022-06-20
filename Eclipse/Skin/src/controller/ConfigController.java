@@ -5,6 +5,7 @@ import java.util.function.Consumer;
 
 import com.fazecast.jSerialComm.SerialPort;
 
+import application.Main;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -22,7 +23,6 @@ import javafx.scene.control.RadioButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Stage;
 import java.io.File;
 import java.io.IOException;
 
@@ -447,14 +447,12 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	@FXML
 	private void onSaveConfig() {
-		Stage s = (Stage) COM.getScene().getWindow();
-
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.setTitle("Save configuration");
 		fileChooser.getExtensionFilters().addAll(
 				new ExtensionFilter("Config Files", "*.noc"),
 				new ExtensionFilter("All Files", "*.*"));
-		File selectedFile = fileChooser.showSaveDialog(s);
+		File selectedFile = fileChooser.showSaveDialog(Main.Stage);
 
 		if (selectedFile != null)
 			try {
@@ -464,28 +462,22 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				alert.setTitle("Save Error");
 				alert.setHeaderText("Unable to save this configuration");
 				alert.setContentText("Maybe the location of the file no longer exists.");
-				
-				s.setAlwaysOnTop(false);
+				alert.initOwner(Main.Stage);
 				alert.showAndWait();
-				s.setAlwaysOnTop(true);
 				e.printStackTrace();
 			}
 	}
 
 	@FXML
 	private void onLoadConfig() {
-		Stage s = (Stage) COM.getScene().getWindow();
-
 		FileChooser fileChooser = new FileChooser();
 		fileChooser.getExtensionFilters().addAll(
 				new ExtensionFilter("Config Files", "*.noc"),
 				new ExtensionFilter("All Files", "*.*"));
-		Load(fileChooser.showOpenDialog(s));
+		Load(fileChooser.showOpenDialog(Main.Stage));
 	}
 	
 	private void Load(File f) {
-		Stage s = (Stage) COM.getScene().getWindow();
-
 		if (f != null)
 			try {
 				GetUserConfigManager().Load(f);
@@ -494,10 +486,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				alert.setTitle("Load Error");
 				alert.setHeaderText("Unable to read this configuration file");
 				alert.setContentText("Maybe this file cannot be read.\nOr it is not compatible with this version of the software.");
-				
-				s.setAlwaysOnTop(false);
+				alert.initOwner(Main.Stage);
 				alert.showAndWait();
-				s.setAlwaysOnTop(true);
 				e.printStackTrace();
 			}
 	}
