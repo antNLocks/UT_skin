@@ -121,10 +121,16 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	private TextField rawRowTF;
 
 	@FXML
-	private Slider resizeFactorSLider;
+	private Slider resizeFactorHeightSLider;
 
 	@FXML
-	private Label resizeFactorView;
+	private Label resizeFactorHeightView;
+	
+	@FXML
+	private Slider resizeFactorWidthSLider;
+
+	@FXML
+	private Label resizeFactorWidthView;
 
 	@FXML
 	private RadioButton rollingAverageT;
@@ -214,6 +220,19 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		connectAndRender.setDisable(!configurationCB.getValue().equalsIgnoreCase("New Config"));
 	};
 	
+	private ChangeListener<Number> resizeFacorSliderListener = (observable, oldValue, newValue) -> {
+		ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
+		MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
+
+		processingConfig.ResizeFactorCol = (int) resizeFactorWidthSLider.getValue();
+		processingConfig.ResizeFactorRow = (int) resizeFactorHeightSLider.getValue();
+		motorsConfig.InputCol = processingConfig.ProcessedBufferCol();
+		motorsConfig.InputRow = processingConfig.ProcessedBufferRow();
+
+		GetUserConfigManager().SetProcessingConfiguration(processingConfig);
+		GetUserConfigManager().SetMotorsConfiguration(motorsConfig);			
+	};
+	
 	public ConfigController(String fileArg) { _fileArg = fileArg;	}
 
 	@FXML
@@ -247,17 +266,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 			GetUserConfigManager().SetProcessingConfiguration(config);
 		});
 
-		resizeFactorSLider.valueProperty().addListener((observable, oldValue, newValue) -> {
-			ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
-			MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
-
-			processingConfig.ResizeFactor = (int) resizeFactorSLider.getValue();
-			motorsConfig.InputCol = processingConfig.ProcessedBufferCol();
-			motorsConfig.InputRow = processingConfig.ProcessedBufferRow();
-
-			GetUserConfigManager().SetProcessingConfiguration(processingConfig);
-			GetUserConfigManager().SetMotorsConfiguration(motorsConfig);			
-		});
+		resizeFactorWidthSLider.valueProperty().addListener(resizeFacorSliderListener);
+		resizeFactorHeightSLider.valueProperty().addListener(resizeFacorSliderListener);
 
 		gaussianDeviationSlider.valueProperty().addListener(motorsConfigSliderListener);
 		uniformDeviationSlider.valueProperty().addListener(motorsConfigSliderListener);
@@ -513,8 +523,11 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		interpolationFactorView.setText(String.format("%1.2f", userConfig.Noise_interpolationFactor));
 		interpolationFactorSlider.setValue(userConfig.Noise_interpolationFactor);
 
-		resizeFactorView.setText(Integer.toString(userConfig.ResizeFactor));
-		resizeFactorSLider.setValue(userConfig.ResizeFactor);
+		resizeFactorWidthView.setText(Integer.toString(userConfig.ResizeFactorCol));
+		resizeFactorWidthSLider.setValue(userConfig.ResizeFactorCol);
+		
+		resizeFactorHeightView.setText(Integer.toString(userConfig.ResizeFactorRow));
+		resizeFactorHeightSLider.setValue(userConfig.ResizeFactorRow);
 
 		rawResolutionView.setText(String.format("%dx%d", userConfig.RawBufferCol, userConfig.RawBufferRow));
 		processedResolutionView.setText(String.format("%dx%d", userConfig.ProcessedBufferCol(), userConfig.ProcessedBufferRow()));

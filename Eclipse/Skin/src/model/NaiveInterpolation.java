@@ -2,13 +2,13 @@ package model;
 
 public class NaiveInterpolation {
 
-	public static float[] ResizeBufferBilinear(float[] rawBuffer, int resizeFactor, int col, int row)
+	public static float[] ResizeBufferBilinear(float[] rawBuffer, int resizeFactorCol, int resizeFactorRow, int col, int row)
 	{
-		float[] result = new float[col * resizeFactor * row * resizeFactor];
+		float[] result = new float[col * resizeFactorCol * row * resizeFactorRow];
 
-		float[][] result2d = new float[row * resizeFactor][col* resizeFactor];
+		float[][] result2d = new float[row * resizeFactorRow][col* resizeFactorCol];
 
-		float[][] colInter = new float [col][row * resizeFactor];
+		float[][] colInter = new float [col][row * resizeFactorRow];
 
 		float[][] rawBuffer2d = new float[col][row];
 
@@ -16,15 +16,15 @@ public class NaiveInterpolation {
 			rawBuffer2d[i % col][i / col] = rawBuffer[i];
 
 		for (int i = 0; i < col; i++)
-			colInter[i] = InterLinear(rawBuffer2d[i], resizeFactor);
+			colInter[i] = InterLinear(rawBuffer2d[i], resizeFactorRow);
 
-		float[][] colInterT = new float[row * resizeFactor][col];
+		float[][] colInterT = new float[row * resizeFactorRow][col];
 		for (int i = 0; i < colInterT.length; i++)
 			for (int j = 0; j < colInterT[i].length; j++)
 				colInterT[i][j] = colInter[j][i];
 
-		for (int i = 0; i < row * resizeFactor; i++)
-			result2d[i] = InterLinear(colInterT[i], resizeFactor);
+		for (int i = 0; i < row * resizeFactorRow; i++)
+			result2d[i] = InterLinear(colInterT[i], resizeFactorCol);
 
 		for (int i = 0; i < result2d.length; i++)
 			for (int j = 0; j < result2d[i].length; j++)

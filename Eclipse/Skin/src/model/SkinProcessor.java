@@ -10,19 +10,20 @@ public class SkinProcessor extends ThreadProcess
 	public static class ProcessingConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
-		public int MinThreshold = 0;
+		public int MinThreshold = 50;
 		public int MaxThreshold = 255;
 		public int Noise_averageAlgo = 0;
 		public int Noise_framesForAverage = 3;
 		public float Noise_interpolationFactor = 0.1f;
 		public long SleepingTime = 10;
 
-		public  int ResizeFactor = 10;
+		public  int ResizeFactorCol = 20;
+		public  int ResizeFactorRow = 20;
 
-		public int RawBufferCol = 12;
-		public int RawBufferRow = 21;
-		public int ProcessedBufferCol() { return RawBufferCol * ResizeFactor; }
-		public int ProcessedBufferRow() { return RawBufferRow * ResizeFactor; }
+		public int RawBufferCol = 10;
+		public int RawBufferRow = 20;
+		public int ProcessedBufferCol() { return RawBufferCol * ResizeFactorCol; }
+		public int ProcessedBufferRow() { return RawBufferRow * ResizeFactorRow; }
 
 		public ProcessingConfiguration() {}
 
@@ -32,7 +33,8 @@ public class SkinProcessor extends ThreadProcess
 			Noise_averageAlgo = p.Noise_averageAlgo;
 			Noise_framesForAverage = p.Noise_framesForAverage;
 			Noise_interpolationFactor = p.Noise_interpolationFactor;
-			ResizeFactor = p.ResizeFactor;
+			ResizeFactorCol = p.ResizeFactorCol;
+			ResizeFactorRow = p.ResizeFactorRow;
 			RawBufferCol = p.RawBufferCol;
 			RawBufferRow = p.RawBufferRow;
 			SleepingTime = p.SleepingTime;
@@ -55,7 +57,7 @@ public class SkinProcessor extends ThreadProcess
 			float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
 					AverageBufferOverTime_rollingAverage(RawInputBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
 						AverageBufferOverTime_interpolationPreviousFrames(RawInputBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
-			float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactor, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
+			float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactorCol, ProcessingConfig.ResizeFactorRow, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
 			float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
 
 			ProcessedOutputBuffer.set(thresholdMappedBuffer);

@@ -10,13 +10,13 @@ public class Motors extends ThreadProcess
 
 		public int InputCol;
 		public int InputRow;
-		public int OutputCol = 2;
-		public int OutputRow = 4;
+		public int OutputCol = 4;
+		public int OutputRow = 3;
 		public int DeviationGaussian = 60;
 		public int DeviationUniform = 60;
 		public float NormalisationFactorGaussian = 1;
 		public float NormalisationFactorUniform = 1;
-		public long SleepingTime = 10;
+		public long SleepingTime = 30;
 
 		public MotorsConfiguration() {}
 

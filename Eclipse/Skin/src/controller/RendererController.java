@@ -106,7 +106,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			if(_skinSerialPort.RawOutputBuffer.get() != null)
 				_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						_skinSerialPort.RawOutputBuffer.get(), 
-						_processingConfig.ResizeFactor, _processingConfig.ResizeFactor,
+						_processingConfig.ResizeFactorCol, _processingConfig.ResizeFactorRow,
 						_processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
 		});
 
@@ -277,7 +277,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 			os.write(0xFF);
 			os.write(0xFF); //Just to be sure
-			os.write((byte) (_motorsConfig.SleepingTime + 4)); //Duration of a frame
+			os.write((byte) (_motorsConfig.SleepingTime + 8)); //Duration of a frame
 
 			for(int j = 0; j < _motorsConfig.OutputRow; j++)
 				for(int i = 0; i < _motorsConfig.OutputCol; i++)
