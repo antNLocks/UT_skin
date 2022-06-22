@@ -78,7 +78,6 @@ namespace BHapticsSkinServer
                 }
             }
             catch (Exception e) { Console.WriteLine(e.ToString()); }
-            Thread.Sleep(20000);
         }
 
         public static void BufferUpdate(List<byte> buffer)

@@ -10,3 +10,15 @@ D:\Users\aLocks\Desktop\UT\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer
 D:\Users\aLocks\Desktop\UT\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.exe
 D:\Users\aLocks\Desktop\UT\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.pdb
 D:\Users\aLocks\Desktop\UT\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.g.resources
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\BHapticsSkinServer.exe
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\BHapticsSkinServer.pdb
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\Bhaptics.Tact.dll
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\Bhaptics.Tact.pdb
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csprojAssemblyReference.cache
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.g.resources
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.Properties.Resources.resources
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.GenerateResource.cache
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.CoreCompileInputs.cache
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.CopyComplete
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.exe
+C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.pdb

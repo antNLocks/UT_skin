@@ -2,7 +2,6 @@ package model;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,13 +105,25 @@ public class SkinSerialPort extends ThreadProcess
 		_serialConfig = config;
 	}
 
-
-	public void Send(String s) {
-		new PrintStream(_serialPort.getOutputStream()).println(s);
+	public void AskCalibration() {
+		try {
+			_serialPort.getOutputStream().write(0x01);
+		} catch (IOException e) { e.printStackTrace(); }
 	}
 
-
+	public void AskScaleCalibration() {
+		try {
+			_serialPort.getOutputStream().write(0x02);
+		} catch (IOException e) { e.printStackTrace(); }
+	}
+	
 	private void SetGain(int gain) {
-		Send("g:" + gain);
+		try {
+			_serialPort.getOutputStream().write(0x03);
+			_serialPort.getOutputStream().write((byte) gain);
+			_serialPort.getOutputStream().flush();
+		} catch (IOException e) { e.printStackTrace(); }
 	}
+	
+	
 }

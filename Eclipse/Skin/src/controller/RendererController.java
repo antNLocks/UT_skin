@@ -265,7 +265,12 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 	@FXML
 	private void onLaunchCalibration() {
-		_skinSerialPort.Send("c");
+		_skinSerialPort.AskCalibration();
+	}
+	
+	@FXML
+	private void onLaunchScaleCalibration() {
+		_skinSerialPort.AskScaleCalibration();
 	}
 
 	@FXML
@@ -277,7 +282,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 			os.write(0xFF);
 			os.write(0xFF); //Just to be sure
-			os.write((byte) (_motorsConfig.SleepingTime + 8)); //Duration of a frame
+			os.write((byte) (_motorsConfig.SleepingTime + 30)); //Duration of a frame
 
 			for(int j = 0; j < _motorsConfig.OutputRow; j++)
 				for(int i = 0; i < _motorsConfig.OutputCol; i++)
@@ -303,7 +308,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 							Alert alert = new Alert(AlertType.ERROR);
 							alert.setTitle("Connection Error");
 							alert.setHeaderText("Socket write error");
-							alert.setContentText("The BHapticsSkinServer was closed.\nPlease start the BHaptics Player first, then launch the BHapticsSkinServer and try again.");
+							alert.setContentText("The BHapticsS skin server was closed.\nPlease start the BHaptics Player first, then launch the BHapticsSkinServer and try again.");
 							alert.initOwner(Main.Stage);
 							alert.showAndWait();
 

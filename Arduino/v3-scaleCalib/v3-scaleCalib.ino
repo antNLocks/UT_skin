@@ -1,19 +1,18 @@
 #include <Muca.h>
+#include <EEPROM.h>
 
+#include "TxRxLoop.h"
 
 #define SKIN_CELLS NUM_TX * NUM_RX
 #define framesToDrop 20
 #define framesForCalib 20
 
-#define Tx 20
-#define Rx 10
-
-const byte Rx_index[] = {0, 6, 1, 7, 2, 8, 3, 4, 9, 10};
-const byte Tx_index[] = {19, 9, 18, 8, 17, 7, 16, 6, 15, 5, 14, 4, 13, 3, 12, 2, 11, 1, 10, 0}; 
 
 
 Muca muca;
 unsigned int rawBufferCalibration[252];
+byte scaleBufferCalibration[252];
+#define scaleBufferAdress 0
 
 float scaleFactor = 3;
 
@@ -31,6 +30,7 @@ void setup() {
 
   calib();
 
+  EEPROM.get(scaleBufferAdress, scaleBufferCalibration);
 }
 
 
@@ -42,22 +42,17 @@ void loop() {
 void GetRaw() {
   if (muca.updated()) {
 
-    for (int i = 0; i < Tx; i++) {
-      for(int j = 0; j < Rx; j++){
-        int index = Tx_index[i] * NUM_RX + Rx_index[j];
+    forEachTxRx([](int Tx_index, int Rx_index){
+        int index = Tx_index * NUM_RX + Rx_index;
         byte b = constrain((signed int) (muca.grid[index] - rawBufferCalibration[index]) / scaleFactor, 1, 255);
         Serial.write(b);
-      }
-    }
+    });
 
     Serial.write(0x00);
   }
-
-  //Serial.flush();
 }
 
 void calib() {
-  Serial.println("[MUCA] Doing calibration");
 
   for (int i = 0; i < SKIN_CELLS; i++)
     rawBufferCalibration[i] = 0;
@@ -69,36 +64,30 @@ void calib() {
       rawBufferCalibration[i] += round(muca.grid[i] / (float) framesForCalib);
   }
 
-  Serial.println("[MUCA] Calibration successfull");
 }
 
-char incomingMsg[5];
+
+void scaleCalib(){
+  
+
+
+
+  EEPROM.put(scaleBufferAdress, scaleBufferCalibration);
+}
 
 void serialEvent() {
-  int charsRead;
-  while (Serial.available() > 0) {
-    charsRead = Serial.readBytesUntil('\n', incomingMsg, sizeof(incomingMsg) - 1);
-    incomingMsg[charsRead] = '\0';  // Make it a string
-    if (incomingMsg[0] == 'g') {
-      Gain();
-    }
-    if (incomingMsg[0] == 'c') {
+  if(Serial.available() > 0){
+    byte b = Serial.read();
+
+    if(b == 0x01)
       calib();
+
+    if(b == 0x02)
+      scaleCalib();
+
+    if(b == 0x03){
+      while(Serial.available() <= 0);
+      muca.setGain(Serial.read());
     }
   }
-}
-
-
-void Gain() {
-  char *str;
-  char *p = incomingMsg;
-  byte i = 0;
-  while ((str = strtok_r(p, ":", &p)) != NULL)  // Don't use \n here it fails
-  {
-    if (i == 1 )  {
-      muca.setGain(atoi(str));
-    }
-    i++;
-  }
-  incomingMsg[0] = '\0'; // Clear array
 }

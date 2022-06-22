@@ -119,7 +119,8 @@
                </padding>
             </Label>
             <Button layoutX="540.0" layoutY="6.0" mnemonicParsing="false" onAction="#onLaunchCalibration" text="Launch Calibration" AnchorPane.rightAnchor="10.0" />
-            <Button fx:id="connectToBHapticsBtn" layoutX="334.0" layoutY="6.0" mnemonicParsing="false" onAction="#onConnectToBHaptics" text="Connect to BHaptics" AnchorPane.rightAnchor="150.0" />
+            <Button fx:id="connectToBHapticsBtn" layoutX="334.0" layoutY="6.0" mnemonicParsing="false" onAction="#onConnectToBHaptics" text="Connect to BHaptics" AnchorPane.rightAnchor="300.0" />
+            <Button layoutX="317.0" layoutY="6.0" mnemonicParsing="false" onAction="#onLaunchScaleCalibration" text="Launch Scale Calibration" AnchorPane.rightAnchor="140.0" />
          </children>
       </AnchorPane>
    </children>
