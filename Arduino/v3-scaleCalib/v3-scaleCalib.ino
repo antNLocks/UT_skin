@@ -91,3 +91,42 @@ void serialEvent() {
     }
   }
 }
+
+/*
+ * 
+ * 
+ *       byte b = constrain((signed int) (muca.grid[index] - rawBufferCalibration[index]) * scaleBufferCalibration[index] /  scaleFactor / scaleBufferCalibration[scalePivot], 1, 255);
+
+
+void scaleCalib() {
+  Serial.println("[MUCA] Doing Scale calibration");
+  calib();
+
+
+  for (int _ = 0; _ < framesForCalib / 2; _++) {
+    while (!muca.updated());
+
+    for (int i = 0; i < SKIN_CELLS; i++)
+      scaleBufferCalibration[i] += round((muca.grid[i] - rawBufferCalibration[i]) / scaleFactor / (framesForCalib / 2));
+  }
+
+  byte imax = 0;
+  for (int i = 0; i < SKIN_CELLS; i++)
+    if (scaleBufferCalibration[imax] < scaleBufferCalibration[i])
+      imax = i;
+
+  float scale = scaleFactor * scaleBufferCalibration[imax] / 255;
+  for (int _ = 0; _ < framesForCalib / 2; _++) {
+    while (!muca.updated());
+
+    for (int i = 0; i < SKIN_CELLS; i++)
+      scaleBufferCalibration[i] += round((muca.grid[i] - rawBufferCalibration[i]) / scale / (framesForCalib / 2));
+  }
+
+
+  Serial.println("[MUCA] Scale Calibration successfull");
+
+  EEPROM.put(scaleBufferAdress, scaleBufferCalibration);
+}aleBufferCalibration[i] += round((muca.grid[i] - rawBufferCalibration[i]) / scale / (framesForCalib / 2));
+  }
+ */
