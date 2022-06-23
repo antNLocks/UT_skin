@@ -30,7 +30,7 @@ byte Muca::readRegister(byte reg, short numberBytes) {
   //Serial.print();
   /*while(Wire.available()) {
       Serial.print(Wire.read());
-      Serial.print(" ");
+      Serial.print(F(" "));
     }*/
 }
 
@@ -63,7 +63,7 @@ void Muca::setGain(int gain) {
     setRegister(0x00, MODE_TEST); // ENsure test mode
     delay(100);
     setRegister(0x07, byte(gain));
-    Serial.print("[Muca] Gain set to ");
+    Serial.print(F("[Muca] Gain set to "));
     Serial.println((gain));
 
     if(!rawData) {
@@ -79,17 +79,17 @@ void Muca::printAllRegisters() {
   // setRegister(0xA7, 0x03); // ID_G_ STATE   FACTORY
 
   byte prev = 0;
-  Serial.print("[Muca] ");
+  Serial.print(F("[Muca] "));
   for(int i =0; i<=255;i++) {
     Serial.print(i,HEX);
-    Serial.print("\t");
+    Serial.print(F("\t"));
     byte current = readRegister(byte(i),1);
     Serial.print(current);
-    Serial.print("\tTOTALPREV\t");
+    Serial.print(F("\tTOTALPREV\t"));
     unsigned int output = (prev << 8) | (current);
   //unsigned int output = word(prev,current);
   //Serial.print((current-1 << 8) | (prev));
-  //Serial.print("\t");
+  //Serial.print(F("\t"));
     Serial.println(output);
     prev = current;
   }
@@ -101,11 +101,11 @@ void Muca::skipLine(MucaLine line, const short lineNumber[], size_t size) {
   // The TX lines are stored from zero to  NUM_TX (12)
   // The RX lines are stores from NUM_RX (21) to end
   // To retrieve, if(skippedLines[i] == true) 
-  Serial.print("[Muca] Adding skip line ");
+  Serial.print(F("[Muca] Adding skip line "));
   for(short i=0; i<  size; i++ ) {
     skippedLines[line + lineNumber[i] -1] = true; // -1 to retract the index 
     Serial.print(line + lineNumber[i]);
-    Serial.print(" ");
+    Serial.print(F(" "));
   }
   Serial.println();
 }
@@ -126,21 +126,21 @@ void Muca::setResolution(unsigned short w, unsigned short h) {
   width = w * NUM_TX / (NUM_TX - skippedTX);
   height = h * NUM_RX / (NUM_RX - skippedRX);;
 
-  Serial.print("[Muca] Setting dimention");
-  if(skippedTX + skippedRX >0) Serial.print(", the dimentions are adapted with skipped lines.");
-  Serial.print(" ");
+  Serial.print(F("[Muca] Setting dimention"));
+  if(skippedTX + skippedRX >0) Serial.print(F(", the dimentions are adapted with skipped lines."));
+  Serial.print(F(" "));
   Serial.print(width);
-  Serial.print(" x ");
+  Serial.print(F(" x "));
   Serial.print(height);
   Serial.println();
 /*
 // TODO : not working cause c'est de la merde
 delay(10);
 
-Serial.print("width_high:");readRegister(0x9c,1);      Serial.print("\t");
-Serial.print("width_low:");readRegister(0x9d,1);     Serial.print("\t");
-Serial.print("height_high:");readRegister(0x9e,1);     Serial.print("\t");
-Serial.print("height_low:");readRegister(0x9f,1);      Serial.print("\t");
+Serial.print(F("width_high:");readRegister(0x9c,1);      Serial.print(F("\t"));
+Serial.print(F("width_low:");readRegister(0x9d,1);     Serial.print(F("\t"));
+Serial.print(F("height_high:");readRegister(0x9e,1);     Serial.print(F("\t"));
+Serial.print(F("height_low:");readRegister(0x9f,1);      Serial.print(F("\t"));
   
   Serial.println();
 */
@@ -161,7 +161,7 @@ Serial.print("height_low:");readRegister(0x9f,1);      Serial.print("\t");
   delay(10);
   setRegister(0x00,MODE_NORMAL); // DEVICE_MODE : NORMAL
   delay(10);
-    Serial.println("[Muca] Set Resolution");
+    Serial.println(F("[Muca] Set Resolution"));
 */
 }
 
@@ -170,29 +170,29 @@ Serial.print("height_low:");readRegister(0x9f,1);      Serial.print("\t");
 
 void Muca::printInfo() {
 
-  Serial.print("[Muca] MODE\t");
+  Serial.print(F("[Muca] MODE\t"));
   Serial.print(readRegister(0xA7, 1));
-  Serial.print("\t");
+  Serial.print(F("\t"));
 
-  Serial.print("[Muca] ID_G_THGROUP\t");
+  Serial.print(F("[Muca] ID_G_THGROUP\t"));
   Serial.print(readRegister(0x80, 1));
-  Serial.print("\t");
+  Serial.print(F("\t"));
 
-  Serial.print("[Muca] ID_G_THPEAK\t");
+  Serial.print(F("[Muca] ID_G_THPEAK\t"));
   Serial.print(readRegister(0x81, 1));
-  Serial.print("\t");
+  Serial.print(F("\t"));
 
-  Serial.print("[Muca] ID_G_THCAL\t");
+  Serial.print(F("[Muca] ID_G_THCAL\t"));
   Serial.print(readRegister(0x82, 1));
-  Serial.print("\t");
+  Serial.print(F("\t"));
 
-  Serial.print("[Muca] ID_G_THDIFF\t");
+  Serial.print(F("[Muca] ID_G_THDIFF\t"));
   Serial.print(readRegister(0x85, 1));
-  Serial.print("\t");
+  Serial.print(F("\t"));
 
-  Serial.print("[Muca] AUTO_CLB_MODE\t");
+  Serial.print(F("[Muca] AUTO_CLB_MODE\t"));
   Serial.print(readRegister(0xA0, 1));
-  Serial.print("\t");
+  Serial.print(F("\t"));
   Serial.println();
 
   setRegister(0x00,MODE_NORMAL);
@@ -204,7 +204,7 @@ void Muca::autocal() {
   int error = 0;
   unsigned char i ;
 
-  Serial.println("[FTS] start auto CLB.");
+  Serial.println(F("[FTS] start auto CLB."));
   delay(200);
   setRegister(0x00,MODE_TEST);
   delay(100);                       //make sure already enter factory mode
@@ -235,22 +235,22 @@ void Muca::autocal() {
     if ( ((reading & 0x70) >> 4) == 0x0)  //return to normal mode, calibration finish
     {
       done = true;
-      Serial.println("[Muca] Calibration done!");
+      Serial.println(F("[Muca] Calibration done!"));
       break;
     }
 
     delay(200);
-    Serial.println("[Muca] Waiting calibration...");
+    Serial.println(F("[Muca] Waiting calibration..."));
   }
 
-  Serial.println("[Muca] Calibration OK.");
+  Serial.println(F("[Muca] Calibration OK."));
 
   delay(300);
 
   
   error = setRegister(0x00,MODE_TEST);
 
-  if (error != 0) { Serial.print("[Muca] Calibration Error"); Serial.println(error);}
+  if (error != 0) { Serial.print(F("[Muca] Calibration Error")); Serial.println(error);}
 
   delay(100);                       //make sure already enter factory mode
 
@@ -258,14 +258,14 @@ void Muca::autocal() {
 
   error = setRegister(0x02,0x5); // SAVE CALIBRATION RESULT
 
-  if (error != 0) {Serial.print("[Muca] Calibration Error"); Serial.println(error);}
+  if (error != 0) {Serial.print(F("[Muca] Calibration Error")); Serial.println(error);}
   delay(300);
 
   setRegister(0x00,MODE_NORMAL); 
 
 
   delay(300);
-  Serial.println("[Muca] Store CLB result OK.");
+  Serial.println(F("[Muca] Store CLB result OK."));
 }
 
 
@@ -287,23 +287,23 @@ void Muca::init(bool interupt) {
 
   byte initDone = -1;
   initDone = setRegister(0x00,MODE_NORMAL);
-  Serial.println("[Muca] Set NORMAL mode");
+  Serial.println(F("[Muca] Set NORMAL mode"));
 
 
   if (initDone == 0) {
-    Serial.println("[Muca] Initialized");
+    Serial.println(F("[Muca] Initialized"));
     delay(100);
     isInit = true;
     delay(100);
   } else {
-    Serial.println("[Muca] Error while setting up Muca. Are you sure the SDA/SCL are connected?");
+    Serial.println(F("[Muca] Error while setting up Muca. Are you sure the SDA/SCL are connected?"));
   }
 
     // Interrupt
   if(useInterrupt) {
       pinMode(CTP_INT ,INPUT);
     #ifdef digitalPinToInterrupt
-    // Serial.println("[Muca] Attachinterrupt");
+    // Serial.println(F("[Muca] Attachinterrupt"));
      attachInterrupt(digitalPinToInterrupt(CTP_INT),interruptmuca,FALLING);
     #else
       attachInterrupt(0,touch_interrupt,FALLING);
@@ -411,7 +411,7 @@ void Muca::useRawData(bool useRaw) {
     useInterrupt = false;
     if(isInit && useRaw) {
       setRegister(0x00,MODE_TEST);
-      Serial.println("[Muca] Set TEST mode");
+      Serial.println(F("[Muca] Set TEST mode"));
   }
 }
 
@@ -469,7 +469,7 @@ void Muca::getRawData() {
       Wire.write(txAddr);
       unsigned int st = Wire.endTransmission(false);
       if (st != 0)  {
-        Serial.println("[Muca] i2c write failed");
+        Serial.println(F("[Muca] i2c write failed"));
       }
 
       delayMicroseconds(50);
@@ -481,7 +481,7 @@ void Muca::getRawData() {
       Wire.write(0x10); // The address of the first rxAddrumn is 0x10 (16 in decimal).
       st = Wire.endTransmission(false);
       if (st != 0)  {
-        Serial.println("[Muca] i2c write failed");
+        Serial.println(F("[Muca] i2c write failed"));
       }
 	  Wire.requestFrom(I2C_ADDRESS, 2 * NUM_RX); // TODO : false was added IDK why
       unsigned int g = 0;
@@ -498,10 +498,10 @@ void Muca::getRawData() {
           unsigned  int output = (result[2 * rxAddr] << 8) | (result[2 * rxAddr + 1]);
            grid[(txAddr * NUM_RX) +  rxAddr] = output; 
         }
-      //  Serial.print("rxAddr ");
+      //  Serial.print(F("rxAddr "));
        // Serial.println(rxAddr);
       }
-         //     Serial.print("txAddr ");
+         //     Serial.print(F("txAddr "));
 
         //Serial.println(txAddr);
 
@@ -537,7 +537,7 @@ unsigned int Muca::getRawData(int rx, int tx) {
   Wire.write(byte(0x01));
   Wire.write(txAddr);
   unsigned int st = Wire.endTransmission();
-  if (st != 0) Serial.println("[Muca] i2c write failed");
+  if (st != 0) Serial.println(F("[Muca] i2c write failed"));
 
   delayMicroseconds(50);
 
