@@ -52,7 +52,7 @@ void GetRaw() {
     for (byte i = 0; i < sizeof(Tx_index); i++) {
       for (byte j = 0; j < sizeof(Rx_index); j++) {
         int index = Tx_index[i] * NUM_RX + Rx_index[j];
-        byte b = constrain(((unsigned int) constrain(((signed int) (muca.grid[index] - rawBufferCalibration[index]))/ scaleFactor,1, 255)) * scaleBufferCalibration[index] / scaleBufferCalibration[scalePivot], 1, 255);
+        byte b = constrain(((unsigned int) constrain(((signed int) (muca.grid[index] - rawBufferCalibration[index]))/ scaleFactor,1, 255)) * scaleBufferCalibration[scalePivot] / scaleBufferCalibration[index], 1, 255);
         Serial.write(b);
       }
     }

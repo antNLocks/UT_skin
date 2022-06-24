@@ -182,6 +182,16 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			e.printStackTrace();
 		}
 	}
+	
+	private float p = 150;
+	private float specialFunc(float input) {
+		if(input > 200)
+			return input;
+		
+		
+		double inter1 = (input - 0) / (200 - 0) * (1 - 1/p) + 1/p;
+		return (float) ((Math.log(inter1) + Math.log(p)) / Math.log(p) * (200 - 0) + 0);
+	}
 
 	private synchronized void instantiateMotors() {
 		if(_motors != null)
@@ -191,6 +201,11 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_motors = new Motors(_motorsConfig);
 		_motors.Register(() -> {
 			try {
+				float[] gaussianOutput = _motors.GaussianOutputBuffer.get();
+				p = _motorsConfig.DeviationUniform;
+				for(int i = 0; i < gaussianOutput.length; i++)
+					gaussianOutput[i] = specialFunc(gaussianOutput[i]); 
+				
 				_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						_motors.GaussianOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
