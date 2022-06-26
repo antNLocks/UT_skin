@@ -383,23 +383,36 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	}
 
 	private void CreateNewConfigurationManager() {
-		ProcessingConfiguration _processingConfig = new ProcessingConfiguration();
-		MotorsConfiguration _motorsConfig = new MotorsConfiguration();
-		_motorsConfig.InputCol = _processingConfig.ProcessedBufferCol();
-		_motorsConfig.InputRow = _processingConfig.ProcessedBufferRow();
-		SerialConfiguration serialConfig = new SerialConfiguration();
+		ProcessingConfiguration _processingConfig;
+		MotorsConfiguration _motorsConfig;
+		SerialConfiguration _serialConfig;
+		
+		if(_userConfigManagers.size() > 0) { //The user asked to render the current config and we create a new one
+			_userConfigManagersView.set(_userConfigManagersView.size() - 1, "Config " + COM.getValue());
+			configurationCB.setValue("Config " + COM.getValue());
+			
+			_processingConfig = new ProcessingConfiguration(GetUserConfigManager().GetProcessingConfiguration());
+			_motorsConfig = new MotorsConfiguration(GetUserConfigManager().GetMotorsConfiguration());
+			_serialConfig = new SerialConfiguration(GetUserConfigManager().GetSerialConfiguration());
+		}
+		else {
+			_processingConfig = new ProcessingConfiguration();
+			_motorsConfig = new MotorsConfiguration();
+			_motorsConfig.InputCol = _processingConfig.ProcessedBufferCol();
+			_motorsConfig.InputRow = _processingConfig.ProcessedBufferRow();
+			_serialConfig = new SerialConfiguration();
+		}
+		
+		
 
 		UserConfigurationManager configManager = new UserConfigurationManager();
 
 		configManager.SetProcessingConfiguration(_processingConfig);
 		configManager.SetMotorsConfiguration(_motorsConfig);
-		configManager.SetSerialConfiguration(serialConfig);
+		configManager.SetSerialConfiguration(_serialConfig);
 		configManager.AddObserver(this);
 
-		if(_userConfigManagers.size() > 0) {
-			_userConfigManagersView.set(_userConfigManagersView.size() - 1, "Config " + COM.getValue());
-			configurationCB.setValue("Config " + COM.getValue());
-		}
+		
 
 		_userConfigManagersView.add("New config");
 		_userConfigManagers.add(configManager);
@@ -429,7 +442,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				() -> {
 					if(configurationCB.getValue().equalsIgnoreCase(configManagerName)) {
 						configurationCB.setValue("New config");
-						configChangeListener.changed(null, null, null);
+						configChangeListener.changed(null, null, null); //Force update
 					}
 
 					int configManagerIndex = _userConfigManagersView.indexOf(configManagerName);

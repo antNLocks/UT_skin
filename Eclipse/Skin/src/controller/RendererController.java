@@ -182,13 +182,13 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			e.printStackTrace();
 		}
 	}
-	
+
 	private float p = 150;
 	private float specialFunc(float input) {
 		if(input > 200)
 			return input;
-		
-		
+
+
 		double inter1 = (input - 0) / (200 - 0) * (1 - 1/p) + 1/p;
 		return (float) ((Math.log(inter1) + Math.log(p)) / Math.log(p) * (200 - 0) + 0);
 	}
@@ -205,7 +205,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				p = _motorsConfig.DeviationUniform;
 				for(int i = 0; i < gaussianOutput.length; i++)
 					gaussianOutput[i] = specialFunc(gaussianOutput[i]); 
-				
+
 				_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						_motors.GaussianOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
@@ -282,68 +282,85 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private void onLaunchCalibration() {
 		_skinSerialPort.AskCalibration();
 	}
-	
+
 	@FXML
 	private void onLaunchScaleCalibration() {
 		_skinSerialPort.AskScaleCalibration();
 	}
 
 	@FXML
-	private void onConnectToBHaptics() {
-		try{   
-			_bhapticsServer = new Socket((String) null, 51470);  
+	private void onDisConnectToBHaptics() {
+		if(_bhapticsSender == null) {
 
-			OutputStream os = _bhapticsServer.getOutputStream();
 
-			os.write(0xFF);
-			os.write(0xFF); //Just to be sure
-			os.write((byte) (_motorsConfig.SleepingTime + 30)); //Duration of a frame
+			try{   
+				_bhapticsServer = new Socket((String) null, 51470);  
 
-			for(int j = 0; j < _motorsConfig.OutputRow; j++)
-				for(int i = 0; i < _motorsConfig.OutputCol; i++)
-					os.write((byte) (j*_motorsConfig.OutputCol + i));
+				OutputStream os = _bhapticsServer.getOutputStream();
 
-			os.write(0xFF);
-			os.flush();
+				os.write(0xFF);
+				os.write(0xFF); //Just to be sure
+				os.write((byte) (_motorsConfig.SleepingTime + 30)); //Duration of a frame
 
-			_bhapticsSender = () -> {
-				float[] output = _motors.GaussianOutputBuffer.get();
-				if(output != null) {
-					try {
-						for(int i = 0; i < output.length; i++) 
-							os.write((byte) ((int) Math.min(254, output[i])));
+				for(int j = 0; j < _motorsConfig.OutputRow; j++)
+					for(int i = 0; i < _motorsConfig.OutputCol; i++)
+						os.write((byte) (j*_motorsConfig.OutputCol + i));
 
-						os.write(0xFF); //End of frame
-						os.flush();
-					} catch (IOException e) {
-						e.printStackTrace();
-						_motors.Unregister(_bhapticsSender);
+				os.write(0xFF);
+				os.flush();
 
-						Platform.runLater(() -> {
-							Alert alert = new Alert(AlertType.ERROR);
-							alert.setTitle("Connection Error");
-							alert.setHeaderText("Socket write error");
-							alert.setContentText("The BHapticsS skin server was closed.\nPlease start the BHaptics Player first, then launch the BHapticsSkinServer and try again.");
-							alert.initOwner(Main.Stage);
-							alert.showAndWait();
+				_bhapticsSender = () -> {
+					float[] output = _motors.GaussianOutputBuffer.get();
+					if(output != null) {
+						try {
+							for(int i = 0; i < output.length; i++) 
+								os.write((byte) ((int) Math.min(254, output[i])));
 
-							connectToBHapticsBtn.setDisable(false);
-						});
+							os.write(0xFF); //End of frame
+							os.flush();
+						} catch (IOException e) {
+							e.printStackTrace();
+							_motors.Unregister(_bhapticsSender);
 
+							Platform.runLater(() -> {
+								Alert alert = new Alert(AlertType.ERROR);
+								alert.setTitle("Connection Error");
+								alert.setHeaderText("Socket write error");
+								alert.setContentText("The BHapticsS skin server was closed.\nPlease start the BHaptics Player first, then\nlaunch the BHapticsSkinServer and try again.");
+								alert.initOwner(Main.Stage);
+								alert.showAndWait();
+
+								connectToBHapticsBtn.setDisable(false);
+							});
+
+						}
 					}
-				}
 
-			};
-			connectToBHapticsBtn.setDisable(true);
-			_motors.Register(_bhapticsSender);
+				};
+				connectToBHapticsBtn.setText("Disconnect BHaptics");
+				_motors.Register(_bhapticsSender);
 
-		}catch(Exception e){
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Connection Error");
-			alert.setHeaderText("Unable to connect to the Bhaptics skin server");
-			alert.setContentText("Please start the BHaptics Player first, then launch the BHapticsSkinServer and try again.");
-			alert.initOwner(Main.Stage);
-			alert.show();
-		}  
+
+			}catch(Exception e){
+				Alert alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Connection Error");
+				alert.setHeaderText("Unable to connect to the Bhaptics skin server");
+				alert.setContentText("Please start the BHaptics Player first, then\nlaunch the BHapticsSkinServer and try again.");
+				alert.initOwner(Main.Stage);
+				alert.show();
+			}
+		}
+		else
+		{
+			_motors.Unregister(_bhapticsSender);
+			try {
+				_bhapticsServer.close();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			_bhapticsSender = null;
+			connectToBHapticsBtn.setText("Connect BHaptics");
+
+		}
 	}
 }

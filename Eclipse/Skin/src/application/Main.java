@@ -24,7 +24,7 @@ public class Main extends Application {
 			loader.setController(configController);
 			Parent root = loader.load();
 			
-			Scene scene = new Scene(root,400,700);
+			Scene scene = new Scene(root,400,710);
 			scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
 			primaryStage.setScene(scene);
 			primaryStage.setAlwaysOnTop(true);			

@@ -10,3 +10,9 @@ C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\D
 C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.csproj.CoreCompileInputs.cache
 C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.dll
 C:\Users\HMI\Desktop\Skin\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.pdb
+C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\bin\Debug\Bhaptics.Tact.dll
+C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\bin\Debug\Bhaptics.Tact.pdb
+C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.csproj.AssemblyReference.cache
+C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.csproj.CoreCompileInputs.cache
+C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.dll
+C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\Bhaptics.Tact\obj\Debug\Bhaptics.Tact.pdb

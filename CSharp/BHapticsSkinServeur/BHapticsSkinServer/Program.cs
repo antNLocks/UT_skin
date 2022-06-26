@@ -87,7 +87,7 @@ namespace BHapticsSkinServer
             for(int i = 0; i < buffer.Count; i++)
                 points.Add(new DotPoint(_motorsMapping[i], (int)(buffer[i] / 2.54f)));
 
-            _player.Submit("_", PositionType.VestBack, points, _durationFrame);
+            _player.Submit("_", PositionType.ForearmL, points, _durationFrame);
         }
 
         public static void ParseMotorsMapping(List<byte> buffer)
