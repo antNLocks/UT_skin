@@ -326,7 +326,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 								Alert alert = new Alert(AlertType.ERROR);
 								alert.setTitle("Connection Error");
 								alert.setHeaderText("Socket write error");
-								alert.setContentText("The BHapticsS skin server was closed.\nPlease start the BHaptics Player first, then\nlaunch the BHapticsSkinServer and try again.");
+								alert.setContentText("The BHapticsSkin server was closed.\nPlease start the BHaptics Player first, then\nlaunch the BHapticsSkinServer and try again.");
 								alert.initOwner(Main.Stage);
 								alert.showAndWait();
 
