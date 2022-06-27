@@ -26,6 +26,7 @@ import model.FPSAnalyser;
 import model.Motors;
 import model.Motors.MotorsConfiguration;
 import model.MotorsTime;
+import model.MotorsTime.MotorsTimeConfiguration;
 import model.NaiveInterpolation;
 import model.SkinProcessor;
 import model.UserConfigurationManager;
@@ -127,7 +128,6 @@ public class RendererController implements UserConfigurationManager.UserObserver
 						specialFunc(_motorsTime.TimeOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 			_motorsTime.SpatialInputBuffer.set(_motors.GaussianOutputBuffer.get());
-			_motorsTime.MotorsTimeConfig.FramesForAverage = _motorsConfig.DeviationUniform;
 		});
 
 		ProcessingConfigurationUpdated(processingConfig);
@@ -259,6 +259,11 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			} catch (Exception e) {/* Memory issue because the sized of the buffer was changed during the print operation*/}
 	}
 
+	//Called by UserConfigurationManager
+	@Override
+	public void MotorsTimeConfigurationUpdated(MotorsTimeConfiguration userConfig) {
+		_motorsTime.MotorsTimeConfig = userConfig;
+	}
 
 	//Called by UserConfigurationManager
 	@Override
@@ -380,4 +385,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 		}
 	}
+
+
+
 }

@@ -13,6 +13,7 @@ import java.util.List;
 import model.Motors.MotorsConfiguration;
 import model.SkinProcessor.ProcessingConfiguration;
 import model.SkinSerialPort.SerialConfiguration;
+import model.MotorsTime.MotorsTimeConfiguration;
 
 public class UserConfigurationManager {
 
@@ -20,6 +21,7 @@ public class UserConfigurationManager {
 		public void ProcessingConfigurationUpdated(SkinProcessor.ProcessingConfiguration userConfig);
 		public void MotorsConfigurationUpdated(Motors.MotorsConfiguration userConfig);
 		public void SerialConfigurationUpdated(SkinSerialPort.SerialConfiguration userConfig);
+		public void MotorsTimeConfigurationUpdated(MotorsTime.MotorsTimeConfiguration userConfig);
 	}
 
 	private static class Configuration implements Serializable{
@@ -28,6 +30,7 @@ public class UserConfigurationManager {
 		public SerialConfiguration Serial = new SerialConfiguration();
 		public ProcessingConfiguration Processing = new ProcessingConfiguration();
 		public MotorsConfiguration Motors = new MotorsConfiguration();
+		public MotorsTimeConfiguration MotorsTime = new MotorsTimeConfiguration();
 	}
 
 
@@ -47,6 +50,10 @@ public class UserConfigurationManager {
 
 	public SkinSerialPort.SerialConfiguration GetSerialConfiguration(){
 		return new SerialConfiguration(_config.Serial);
+	}
+	
+	public MotorsTime.MotorsTimeConfiguration GetMotorsTimeConfiguration() {
+		return new MotorsTimeConfiguration(_config.MotorsTime);
 	}
 
 	public void SetProcessingConfiguration(SkinProcessor.ProcessingConfiguration conf) {
@@ -70,6 +77,12 @@ public class UserConfigurationManager {
 			obs.SerialConfigurationUpdated(new SerialConfiguration(_config.Serial));
 	}
 
+	public void SetMotorsTimeConfiguration(MotorsTime.MotorsTimeConfiguration conf) {
+		_config.MotorsTime = conf;
+		
+		for(UserObserver obs : _observers)
+			obs.MotorsTimeConfigurationUpdated(new MotorsTimeConfiguration(_config.MotorsTime));
+	}
 
 	public void AddObserver(UserObserver obs) {
 		_observers.add(obs);
@@ -98,9 +111,10 @@ public class UserConfigurationManager {
 			ois = new ObjectInputStream(new FileInputStream(f));
 			Configuration config = (Configuration) ois.readObject();
 			
-			SetSerialConfiguration(config.Serial);
-			SetMotorsConfiguration(config.Motors);
-			SetProcessingConfiguration(config.Processing);
+			SetSerialConfiguration(config.Serial != null ? config.Serial : new SerialConfiguration());
+			SetMotorsConfiguration(config.Motors != null ? config.Motors : new MotorsConfiguration());
+			SetProcessingConfiguration(config.Processing != null ? config.Processing : new ProcessingConfiguration());
+			SetMotorsTimeConfiguration(config.MotorsTime != null ? config.MotorsTime : new MotorsTimeConfiguration());
 			
 		}catch (ClassNotFoundException e) {
 			e.printStackTrace();

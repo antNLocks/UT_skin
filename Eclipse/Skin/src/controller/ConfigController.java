@@ -28,6 +28,7 @@ import java.io.IOException;
 
 import model.UserConfigurationManager;
 import model.Motors.MotorsConfiguration;
+import model.MotorsTime.MotorsTimeConfiguration;
 import model.SkinProcessor.ProcessingConfiguration;
 import model.SkinSerialPort.SerialConfiguration;
 
@@ -136,28 +137,28 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	private RadioButton rollingAverageT;
 	
 	@FXML
-	private Slider sleepingTimeMotorsSlider;
+	private Slider sleepingTimeMotorsSpatialSlider;
 	
 	@FXML
-	private Label sleepingTimeMotorsView;
+	private Label sleepingTimeMotorsSpatialView;
+	
+	@FXML
+	private Slider sleepingTimeMotorsTimeSlider;
+	
+	@FXML
+	private Label sleepingTimeMotorsTimeView;
 	
 	@FXML
 	private Slider sleepingTimeProcessingSlider;
 	
 	@FXML
 	private Label sleepingTimeProcessingView;
-
+	
 	@FXML
-	private Slider uniformDeviationSlider;
-
+	private Slider trailingFramesSlider;
+	
 	@FXML
-	private Label uniformDeviationView;
-
-	@FXML
-	private Slider uniformNormalisationFactorSlider;
-
-	@FXML
-	private Label uniformNormalisationFactorView;
+	private Label trailingFramesView;
 
 	private final String INVALID_STYLE = "-fx-text-box-border: #FF0000; -fx-focus-color: #FF0000;";
 	private final String VALID_STYLE = "-fx-text-box-border: #00FF00; -fx-focus-color: #00FF00;";
@@ -179,12 +180,19 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		MotorsConfiguration config = GetUserConfigManager().GetMotorsConfiguration();
 
 		config.DeviationGaussian = (int) gaussianDeviationSlider.getValue();
-		config.DeviationUniform = (int) uniformDeviationSlider.getValue();
 		config.NormalisationFactorGaussian = (float) gaussianNormalisationFactorSlider.getValue();
-		config.NormalisationFactorUniform = (float) uniformNormalisationFactorSlider.getValue();
-		config.SleepingTime = (long) sleepingTimeMotorsSlider.getValue();
+		config.SleepingTime = (long) sleepingTimeMotorsSpatialSlider.getValue();
 		
 		GetUserConfigManager().SetMotorsConfiguration(config);
+	};
+	
+	private ChangeListener<Number> motorsTimeConfigSliderListener = (observable, oldValue, newValue) -> {
+		MotorsTimeConfiguration config = GetUserConfigManager().GetMotorsTimeConfiguration();
+
+		config.TrailingFrames = (int) trailingFramesSlider.getValue();
+		config.SleepingTime = (long) sleepingTimeMotorsTimeSlider.getValue();
+		
+		GetUserConfigManager().SetMotorsTimeConfiguration(config);
 	};
 
 	private class NumericTFListener implements ChangeListener<String> {
@@ -270,9 +278,9 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		resizeFactorHeightSLider.valueProperty().addListener(resizeFacorSliderListener);
 
 		gaussianDeviationSlider.valueProperty().addListener(motorsConfigSliderListener);
-		uniformDeviationSlider.valueProperty().addListener(motorsConfigSliderListener);
 		gaussianNormalisationFactorSlider.valueProperty().addListener(motorsConfigSliderListener);
-		uniformNormalisationFactorSlider.valueProperty().addListener(motorsConfigSliderListener);
+		
+		trailingFramesSlider.valueProperty().addListener(motorsTimeConfigSliderListener);
 
 		frameSeparatorByteTF.textProperty().addListener(new NumericTFListener(
 				frameSeparatorByteTF, "^(0x)?((\\d|[a-f]|[A-F])?){2}$", "^(0x)?(\\d|[a-f]|[A-F]){2}$", (newValue) -> {
@@ -378,8 +386,9 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		configurationCB.valueProperty().addListener(configChangeListener);
 		
-		sleepingTimeMotorsSlider.valueProperty().addListener(motorsConfigSliderListener);
+		sleepingTimeMotorsSpatialSlider.valueProperty().addListener(motorsConfigSliderListener);
 		sleepingTimeProcessingSlider.valueProperty().addListener(processingConfigSliderListener);
+		sleepingTimeMotorsTimeSlider.valueProperty().addListener(motorsTimeConfigSliderListener);
 	}
 
 	private void CreateNewConfigurationManager() {
@@ -427,6 +436,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		ProcessingConfigurationUpdated(config.GetProcessingConfiguration());
 		SerialConfigurationUpdated(config.GetSerialConfiguration());
 		MotorsConfigurationUpdated(config.GetMotorsConfiguration());
+		MotorsTimeConfigurationUpdated(config.GetMotorsTimeConfiguration());
 	}
 
 
@@ -561,14 +571,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		gaussianDeviationView.setText(Integer.toString(userConfig.DeviationGaussian));
 		gaussianDeviationSlider.setValue(userConfig.DeviationGaussian);
 
-		uniformDeviationView.setText(Integer.toString(userConfig.DeviationUniform));
-		uniformDeviationSlider.setValue(userConfig.DeviationUniform);
-
 		gaussianNormalisationFactorView.setText(String.format("%1.1f", userConfig.NormalisationFactorGaussian));
 		gaussianNormalisationFactorSlider.setValue(userConfig.NormalisationFactorGaussian);
-
-		uniformNormalisationFactorView.setText(String.format("%1.1f", userConfig.NormalisationFactorUniform));
-		uniformNormalisationFactorSlider.setValue(userConfig.NormalisationFactorUniform);
 
 		motorsColTF.setText(Integer.toString(userConfig.OutputCol));
 		motorsColTF.setStyle(VALID_STYLE);
@@ -576,8 +580,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		motorsRowTF.setText(Integer.toString(userConfig.OutputRow));
 		motorsRowTF.setStyle(VALID_STYLE);
 		
-		sleepingTimeMotorsSlider.setValue(userConfig.SleepingTime);
-		sleepingTimeMotorsView.setText(Long.toString(userConfig.SleepingTime));
+		sleepingTimeMotorsSpatialSlider.setValue(userConfig.SleepingTime);
+		sleepingTimeMotorsSpatialView.setText(Long.toString(userConfig.SleepingTime));
 	}
 
 
@@ -590,5 +594,14 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		hardwareGainView.setText(Integer.toString(userConfig.HardwareGain));
 		hardwareGainSlider.setValue(userConfig.HardwareGain);
+	}
+
+	@Override
+	public void MotorsTimeConfigurationUpdated(MotorsTimeConfiguration userConfig) {
+		trailingFramesSlider.setValue(userConfig.TrailingFrames);
+		trailingFramesView.setText(Integer.toString(userConfig.TrailingFrames));
+		
+		sleepingTimeMotorsTimeSlider.setValue(userConfig.SleepingTime);
+		sleepingTimeMotorsTimeView.setText(Long.toString(userConfig.SleepingTime));
 	}
 }

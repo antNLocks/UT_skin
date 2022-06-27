@@ -9,8 +9,17 @@ public class MotorsTime extends ThreadProcess {
 	public static class MotorsTimeConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
-		public int FramesForAverage = 10;
-		public int SleepingTime = 30;
+		public int TrailingFrames = 10;
+		public long SleepingTime = 30;
+		
+		public MotorsTimeConfiguration() {}
+		
+		public MotorsTimeConfiguration(MotorsTimeConfiguration m) {
+			TrailingFrames = m.TrailingFrames;
+			SleepingTime = m.SleepingTime;
+		}
+		
+		
 	}
 
 	public MotorsTimeConfiguration MotorsTimeConfig = new MotorsTimeConfiguration();
@@ -26,7 +35,7 @@ public class MotorsTime extends ThreadProcess {
 		try {
 			float[] input = SpatialInputBuffer.get();
 
-			float[] averageBuffer = MUtils.RollingAverage(input, MotorsTimeConfig.FramesForAverage, _spatialBuffers);
+			float[] averageBuffer = MUtils.RollingAverage(input, MotorsTimeConfig.TrailingFrames, _spatialBuffers);
 
 			float[] output = new float[averageBuffer.length];
 			for(int i = 0; i < averageBuffer.length; i++)
