@@ -152,7 +152,7 @@
 												<Insets bottom="7.0" />
 											</padding>
 										</Label>
-										<Slider fx:id="framesForAverageSlider" blockIncrement="1.0" majorTickUnit="300.0" max="10.0" showTickLabels="true" value="3.0" GridPane.columnIndex="2" />
+										<Slider fx:id="framesForAverageSlider" blockIncrement="1.0" majorTickUnit="300.0" max="10.0" min="1.0" showTickLabels="true" value="3.0" GridPane.columnIndex="2" />
 										<Slider fx:id="interpolationFactorSlider" blockIncrement="0.01" majorTickUnit="300.0" max="1.0" showTickLabels="true" value="0.5" GridPane.columnIndex="2" GridPane.rowIndex="1" />
 										<Label fx:id="framesForAverageView" text="3" GridPane.columnIndex="1">
 											<font>

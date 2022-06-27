@@ -1,5 +1,7 @@
 package model;
 
+import java.util.ArrayDeque;
+import java.util.Iterator;
 import java.util.List;
 
 public class MUtils
@@ -47,6 +49,25 @@ public class MUtils
 		for(int  i = 0; i < buffer.size(); i++)
 			result[i] = buffer.get(i);
 		
+		return result;
+	}
+	
+	public static float[] RollingAverage(float[] actualBuffer, int nbFrames, ArrayDeque<float[]> buffers) {
+		float[] result = new float[actualBuffer.length];
+
+		buffers.add(actualBuffer);
+
+		while (buffers.size() > nbFrames)
+			buffers.poll();
+
+
+		Iterator<float[]> it = buffers.iterator();
+		while (it.hasNext()) {
+			float[] b = it.next();
+			for (int i = 0; i < actualBuffer.length; i++)
+				result[i] += b[i] / (float) buffers.size();
+		}
+
 		return result;
 	}
 }

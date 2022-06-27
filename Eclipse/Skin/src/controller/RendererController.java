@@ -25,6 +25,7 @@ import javafx.stage.Stage;
 import model.FPSAnalyser;
 import model.Motors;
 import model.Motors.MotorsConfiguration;
+import model.MotorsTime;
 import model.NaiveInterpolation;
 import model.SkinProcessor;
 import model.UserConfigurationManager;
@@ -73,6 +74,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private SkinSerialPort _skinSerialPort;
 	private SkinProcessor _skinProcessor;
 	private Motors _motors;
+	private MotorsTime _motorsTime;
 
 	private Socket _bhapticsServer = null;
 	private IProcessListener _bhapticsSender = null;
@@ -80,7 +82,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	private AtomicReference<float[]> _inputRawBufferRef = new AtomicReference<>();
 	private AtomicReference<float[]> _inputProcessedBufferRef = new AtomicReference<>();
 	private AtomicReference<float[]> _outputGaussianBufferRef = new AtomicReference<>();
-	private AtomicReference<float[]> _outputUniformAverageBufferRef = new AtomicReference<>();
+	private AtomicReference<float[]> _outputTimeBufferRef = new AtomicReference<>();
 
 
 
@@ -118,6 +120,16 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
 		});
 
+		_motorsTime = new MotorsTime();
+		_motorsTime.Register(() -> {
+			if(_motorsTime.TimeOutputBuffer.get() != null) 
+				_outputTimeBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+						specialFunc(_motorsTime.TimeOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
+
+			_motorsTime.SpatialInputBuffer.set(_motors.GaussianOutputBuffer.get());
+			_motorsTime.MotorsTimeConfig.FramesForAverage = _motorsConfig.DeviationUniform;
+		});
+
 		ProcessingConfigurationUpdated(processingConfig);
 		MotorsConfigurationUpdated(motorsConfig);
 
@@ -128,13 +140,13 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				TryPrintBuffer(_inputRawBufferRef, inputRaw, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
 				TryPrintBuffer(_inputProcessedBufferRef, inputProcessed, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
 				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
-				TryPrintBuffer(_outputUniformAverageBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
+				TryPrintBuffer(_outputTimeBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
 
 				try {
 					rawSignalFPS.setText("Refresh rate : " + (int) _skinSerialPort.GetProcessFPS() + " Hz");
 					processedSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetProcessFPS() + " Hz");
 					motorsGaussianFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
-					motorsUniformFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
+					motorsUniformFPS.setText("Refresh rate : " + (int) _motorsTime.GetProcessFPS() + " Hz");
 					drawingFPS.setText("Drawing rate : " + (int) _fpsDrawingAnalyser.GetFPS() + " fps");
 				} catch(NullPointerException e) {}
 
@@ -145,6 +157,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 		_skinProcessor.StartThread();
 		_skinSerialPort.StartThread();
+		_motorsTime.StartThread();
 	}
 
 
@@ -164,6 +177,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			_window.setScene(scene);
 
 			_window.setOnCloseRequest(e -> {
+				_motorsTime.StopThread();
 				_motors.StopThread();
 				_skinProcessor.StopThread();
 				_skinSerialPort.StopThread();
@@ -184,13 +198,23 @@ public class RendererController implements UserConfigurationManager.UserObserver
 	}
 
 	private float p = 150;
-	private float specialFunc(float input) {
-		if(input > 200)
-			return input;
+	private float[] specialFunc(float[] inputBuffer) {
+		float[] outputBuffer = new float[inputBuffer.length];
+
+		for(int i = 0; i < inputBuffer.length; i++) {
+			float input = inputBuffer[i];
+			
+			if(input > 200)
+				outputBuffer[i] = input;
+
+			if(input < 1)
+				outputBuffer[i] = 0;
 
 
-		double inter1 = (input - 0) / (200 - 0) * (1 - 1/p) + 1/p;
-		return (float) ((Math.log(inter1) + Math.log(p)) / Math.log(p) * (200 - 0) + 0);
+			double inter1 = (input - 0) / (200 - 0) * (1 - 1/p) + 1/p;
+			outputBuffer[i] = (float) ((Math.log(inter1) + Math.log(p)) / Math.log(p) * (200 - 0) + 0);
+		}
+		return outputBuffer;
 	}
 
 	private synchronized void instantiateMotors() {
@@ -201,16 +225,9 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_motors = new Motors(_motorsConfig);
 		_motors.Register(() -> {
 			try {
-				float[] gaussianOutput = _motors.GaussianOutputBuffer.get();
-				p = _motorsConfig.DeviationUniform;
-				for(int i = 0; i < gaussianOutput.length; i++)
-					gaussianOutput[i] = specialFunc(gaussianOutput[i]); 
-
 				_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-						_motors.GaussianOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
+						specialFunc(_motors.GaussianOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
-				_outputUniformAverageBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-						_motors.UniformOutputBuffer.get(), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 			} catch(NullPointerException e) {}
 			_motors.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
@@ -310,7 +327,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				os.flush();
 
 				_bhapticsSender = () -> {
-					float[] output = _motors.GaussianOutputBuffer.get();
+					float[] output = _motorsTime.TimeOutputBuffer.get();
 					if(output != null) {
 						try {
 							for(int i = 0; i < output.length; i++) 

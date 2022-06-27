@@ -2,7 +2,6 @@ package model;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;
-import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SkinProcessor extends ThreadProcess
@@ -49,13 +48,16 @@ public class SkinProcessor extends ThreadProcess
 	public AtomicReference<float[]> ProcessedOutputBuffer = new AtomicReference<>();
 
 	public AtomicReference<float[]> RawInputBuffer = new AtomicReference<>();
+	
+	private ArrayDeque<float[]> _rawBuffers = new ArrayDeque<float[]>();
+
 
 
 	@Override
 	protected void Process() {
 		try {
 			float[] averageBuffer = ProcessingConfig.Noise_averageAlgo == 0 ? 
-					AverageBufferOverTime_rollingAverage(RawInputBuffer.get(), ProcessingConfig.Noise_framesForAverage) :
+					MUtils.RollingAverage(RawInputBuffer.get(), ProcessingConfig.Noise_framesForAverage, _rawBuffers) :
 						AverageBufferOverTime_interpolationPreviousFrames(RawInputBuffer.get(), ProcessingConfig.Noise_interpolationFactor);
 			float[] resizedBuffer = NaiveInterpolation.ResizeBufferBilinear(averageBuffer, ProcessingConfig.ResizeFactorCol, ProcessingConfig.ResizeFactorRow, ProcessingConfig.RawBufferCol, ProcessingConfig.RawBufferRow);
 			float[] thresholdMappedBuffer = ThresholdMapping(resizedBuffer, ProcessingConfig.MinThreshold, ProcessingConfig.MaxThreshold);
@@ -75,26 +77,6 @@ public class SkinProcessor extends ThreadProcess
 		super.Sleep();
 	}
 
-
-	ArrayDeque<float[]> rawBuffers = new ArrayDeque<float[]>();
-	private float[] AverageBufferOverTime_rollingAverage(float[] actualRawBuffer, int nbFrames) {
-		float[] result = new float[actualRawBuffer.length];
-
-		rawBuffers.add(actualRawBuffer);
-
-		while (rawBuffers.size() > nbFrames)
-			rawBuffers.poll();
-
-
-		Iterator<float[]> it = rawBuffers.iterator();
-		while (it.hasNext()) {
-			float[] rwB = it.next();
-			for (int i = 0; i < actualRawBuffer.length; i++)
-				result[i] += rwB[i] / (float) rawBuffers.size();
-		}
-
-		return result;
-	}
 
 	private float[] previousRawBuffer = null;
 	private float[] AverageBufferOverTime_interpolationPreviousFrames(float[] actualRawBuffer, float k)
