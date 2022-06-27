@@ -27,7 +27,7 @@
          <children>
             <VBox prefHeight="200.0" prefWidth="100.0">
                <children>
-                  <Label text="Raw Signal">
+                  <Label text="Sensor output -&gt; Raw Signal">
                      <font>
                         <Font name="System Bold Italic" size="14.0" />
                      </font>
@@ -65,7 +65,7 @@
             </VBox>
             <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="2">
                <children>
-                  <Label text="Motors Gaussian">
+                  <Label text="Spatial Convolution">
                      <font>
                         <Font name="System Bold Italic" size="14.0" />
                      </font>
@@ -84,7 +84,7 @@
             </VBox>
             <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="3">
                <children>
-                  <Label text="Motors Uniform">
+                  <Label text="Time Consistency -&gt; Motors input">
                      <font>
                         <Font name="System Bold Italic" size="14.0" />
                      </font>
