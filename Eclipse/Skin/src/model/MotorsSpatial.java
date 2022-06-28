@@ -3,9 +3,9 @@ package model;
 import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class Motors extends ThreadProcess
+public class MotorsSpatial extends ThreadProcess
 {
-	public static class MotorsConfiguration implements Serializable{
+	public static class MotorsSpatialConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
 		public int InputCol;
@@ -18,9 +18,9 @@ public class Motors extends ThreadProcess
 		public float NormalisationFactorUniform = 1;
 		public long SleepingTime = 30;
 
-		public MotorsConfiguration() {}
+		public MotorsSpatialConfiguration() {}
 
-		public MotorsConfiguration(MotorsConfiguration m) {
+		public MotorsSpatialConfiguration(MotorsSpatialConfiguration m) {
 			InputCol = m.InputCol;
 			InputRow = m.InputRow;
 			OutputCol = m.OutputCol;
@@ -36,7 +36,7 @@ public class Motors extends ThreadProcess
 	@SuppressWarnings("serial")
 	public static class MemoryException extends Exception{	};
 
-	private MotorsConfiguration _motorsConfig;
+	private MotorsSpatialConfiguration _motorsConfig;
 	
 
 	public AtomicReference<float[]> GaussianOutputBuffer = new AtomicReference<>();
@@ -48,7 +48,7 @@ public class Motors extends ThreadProcess
 	public float[][] UniformAverageConvolBuffers;
 	
 
-	public Motors(MotorsConfiguration motorsConfig)
+	public MotorsSpatial(MotorsSpatialConfiguration motorsConfig)
 	{
 		_motorsConfig = motorsConfig;
 

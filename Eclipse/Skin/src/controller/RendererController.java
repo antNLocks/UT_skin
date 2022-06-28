@@ -23,8 +23,8 @@ import javafx.scene.image.WritableImage;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import model.FPSAnalyser;
-import model.Motors;
-import model.Motors.MotorsConfiguration;
+import model.MotorsSpatial;
+import model.MotorsSpatial.MotorsSpatialConfiguration;
 import model.MotorsTime;
 import model.MotorsTime.MotorsTimeConfiguration;
 import model.NaiveInterpolation;
@@ -74,7 +74,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 	private SkinSerialPort _skinSerialPort;
 	private SkinProcessor _skinProcessor;
-	private Motors _motors;
+	private MotorsSpatial _motorsSpatial;
 	private MotorsTime _motorsTime;
 
 	private Socket _bhapticsServer = null;
@@ -82,7 +82,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 	private AtomicReference<float[]> _inputRawBufferRef = new AtomicReference<>();
 	private AtomicReference<float[]> _inputProcessedBufferRef = new AtomicReference<>();
-	private AtomicReference<float[]> _outputGaussianBufferRef = new AtomicReference<>();
+	private AtomicReference<float[]> _outputSpatialBufferRef = new AtomicReference<>();
 	private AtomicReference<float[]> _outputTimeBufferRef = new AtomicReference<>();
 
 
@@ -96,15 +96,15 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 
 	private ProcessingConfiguration _processingConfig;
-	private MotorsConfiguration _motorsConfig;
+	private MotorsSpatialConfiguration _motorsConfig;
 
 	private FPSAnalyser _fpsDrawingAnalyser = new FPSAnalyser();
 
-	public RendererController(String title, int COM, ProcessingConfiguration processingConfig, MotorsConfiguration motorsConfig, SerialConfiguration serialConfig, Runnable onExit) {
+	public RendererController(String title, int COM, UserConfigurationManager.Configuration userConfig, Runnable onExit) {
 		_onExit = onExit;
 		LaunchWindow(title);
 
-		_skinSerialPort = new SkinSerialPort(COM, serialConfig);
+		_skinSerialPort = new SkinSerialPort(COM, userConfig.Serial);
 		_skinSerialPort.Register(() -> {
 			if(_skinSerialPort.RawOutputBuffer.get() != null)
 				_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
@@ -127,11 +127,12 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				_outputTimeBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						specialFunc(_motorsTime.TimeOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
-			_motorsTime.SpatialInputBuffer.set(_motors.GaussianOutputBuffer.get());
+			_motorsTime.SpatialInputBuffer.set(_motorsSpatial.GaussianOutputBuffer.get());
 		});
 
-		ProcessingConfigurationUpdated(processingConfig);
-		MotorsConfigurationUpdated(motorsConfig);
+		ProcessingConfigurationUpdated(userConfig.Processing);
+		MotorsSpatialConfigurationUpdated(userConfig.MotorsSpatial);
+		MotorsTimeConfigurationUpdated(userConfig.MotorsTime);
 
 		new AnimationTimer() {
 
@@ -139,13 +140,13 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			public void handle(long now) {
 				TryPrintBuffer(_inputRawBufferRef, inputRaw, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
 				TryPrintBuffer(_inputProcessedBufferRef, inputProcessed, _processingConfig.ProcessedBufferCol(), _processingConfig.ProcessedBufferRow());
-				TryPrintBuffer(_outputGaussianBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
+				TryPrintBuffer(_outputSpatialBufferRef, outputGaussian, _outputMotorsImageCol, _outputMotorsImageRow);
 				TryPrintBuffer(_outputTimeBufferRef, outputUniformAverage, _outputMotorsImageCol, _outputMotorsImageRow);
 
 				try {
 					rawSignalFPS.setText("Refresh rate : " + (int) _skinSerialPort.GetProcessFPS() + " Hz");
 					processedSignalFPS.setText("Refresh rate : " + (int) _skinProcessor.GetProcessFPS() + " Hz");
-					motorsGaussianFPS.setText("Refresh rate : " + (int) _motors.GetProcessFPS() + " Hz");
+					motorsGaussianFPS.setText("Refresh rate : " + (int) _motorsSpatial.GetProcessFPS() + " Hz");
 					motorsUniformFPS.setText("Refresh rate : " + (int) _motorsTime.GetProcessFPS() + " Hz");
 					drawingFPS.setText("Drawing rate : " + (int) _fpsDrawingAnalyser.GetFPS() + " fps");
 				} catch(NullPointerException e) {}
@@ -178,7 +179,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 			_window.setOnCloseRequest(e -> {
 				_motorsTime.StopThread();
-				_motors.StopThread();
+				_motorsSpatial.StopThread();
 				_skinProcessor.StopThread();
 				_skinSerialPort.StopThread();
 				if(_bhapticsServer != null)
@@ -217,26 +218,26 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		return outputBuffer;
 	}
 
-	private synchronized void instantiateMotors() {
-		if(_motors != null)
-			_motors.StopThread();
+	private synchronized void instantiateMotorsSpatial() {
+		if(_motorsSpatial != null)
+			_motorsSpatial.StopThread();
 
 
-		_motors = new Motors(_motorsConfig);
-		_motors.Register(() -> {
+		_motorsSpatial = new MotorsSpatial(_motorsConfig);
+		_motorsSpatial.Register(() -> {
 			try {
-				_outputGaussianBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
-						specialFunc(_motors.GaussianOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
+				_outputSpatialBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
+						specialFunc(_motorsSpatial.GaussianOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
 
 			} catch(NullPointerException e) {}
-			_motors.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
+			_motorsSpatial.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
 		});
 
 		if(_bhapticsSender != null)
-			_motors.Register(_bhapticsSender);
+			_motorsSpatial.Register(_bhapticsSender);
 
-		_motors.StartThread();		
+		_motorsSpatial.StartThread();		
 	}
 
 
@@ -267,7 +268,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 	//Called by UserConfigurationManager
 	@Override
-	public void MotorsConfigurationUpdated(MotorsConfiguration userConfig) {
+	public void MotorsSpatialConfigurationUpdated(MotorsSpatialConfiguration userConfig) {
 		_motorsConfig = userConfig;
 		_resizeFactorMotorsImageCol =  userConfig.InputCol / userConfig.OutputCol;
 		_resizeFactorMotorsImageRow = userConfig.InputRow / userConfig.OutputRow;
@@ -275,7 +276,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		_outputMotorsImageCol = userConfig.OutputCol * _resizeFactorMotorsImageCol ;
 		_outputMotorsImageRow = userConfig.OutputRow * _resizeFactorMotorsImageRow;
 
-		new Thread(()-> instantiateMotors()).start();
+		new Thread(()-> instantiateMotorsSpatial()).start();
 
 		_window.setMinWidth(Math.max(_processingConfig.ProcessedBufferCol()*2 + _outputMotorsImageCol*2 + 200, _minWidth));
 		_window.setMinHeight(Math.max(Math.max(_processingConfig.ProcessedBufferRow(), _outputMotorsImageRow) + 200, _minHeight));
@@ -342,7 +343,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 							os.flush();
 						} catch (IOException e) {
 							e.printStackTrace();
-							_motors.Unregister(_bhapticsSender);
+							_motorsSpatial.Unregister(_bhapticsSender);
 
 							Platform.runLater(() -> {
 								Alert alert = new Alert(AlertType.ERROR);
@@ -360,7 +361,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 				};
 				connectToBHapticsBtn.setText("Disconnect BHaptics");
-				_motors.Register(_bhapticsSender);
+				_motorsSpatial.Register(_bhapticsSender);
 
 
 			}catch(Exception e){
@@ -374,7 +375,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 		}
 		else
 		{
-			_motors.Unregister(_bhapticsSender);
+			_motorsSpatial.Unregister(_bhapticsSender);
 			try {
 				_bhapticsServer.close();
 			} catch (IOException e) {

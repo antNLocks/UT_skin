@@ -84,7 +84,7 @@
             </VBox>
             <VBox prefHeight="200.0" prefWidth="100.0" GridPane.columnIndex="3">
                <children>
-                  <Label text="Time Consistency -&gt; Motors input">
+                  <Label text="Time Smoothed-&gt; Motors input">
                      <font>
                         <Font name="System Bold Italic" size="14.0" />
                      </font>

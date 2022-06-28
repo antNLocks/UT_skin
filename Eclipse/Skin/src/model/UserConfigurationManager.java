@@ -10,7 +10,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.Motors.MotorsConfiguration;
+import model.MotorsSpatial.MotorsSpatialConfiguration;
 import model.SkinProcessor.ProcessingConfiguration;
 import model.SkinSerialPort.SerialConfiguration;
 import model.MotorsTime.MotorsTimeConfiguration;
@@ -19,18 +19,27 @@ public class UserConfigurationManager {
 
 	public static interface UserObserver {
 		public void ProcessingConfigurationUpdated(SkinProcessor.ProcessingConfiguration userConfig);
-		public void MotorsConfigurationUpdated(Motors.MotorsConfiguration userConfig);
+		public void MotorsSpatialConfigurationUpdated(MotorsSpatial.MotorsSpatialConfiguration userConfig);
 		public void SerialConfigurationUpdated(SkinSerialPort.SerialConfiguration userConfig);
 		public void MotorsTimeConfigurationUpdated(MotorsTime.MotorsTimeConfiguration userConfig);
 	}
 
-	private static class Configuration implements Serializable{
+	public static class Configuration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
 		public SerialConfiguration Serial = new SerialConfiguration();
 		public ProcessingConfiguration Processing = new ProcessingConfiguration();
-		public MotorsConfiguration Motors = new MotorsConfiguration();
+		public MotorsSpatialConfiguration MotorsSpatial = new MotorsSpatialConfiguration();
 		public MotorsTimeConfiguration MotorsTime = new MotorsTimeConfiguration();
+		
+		public Configuration() {}
+		
+		public Configuration(Configuration c) {
+			Serial = new SerialConfiguration(c.Serial);
+			Processing = new ProcessingConfiguration(c.Processing);
+			MotorsSpatial = new MotorsSpatialConfiguration(c.MotorsSpatial);
+			MotorsTime = new MotorsTimeConfiguration(c.MotorsTime);
+		}
 	}
 
 
@@ -44,8 +53,8 @@ public class UserConfigurationManager {
 		return new ProcessingConfiguration(_config.Processing);
 	}
 
-	public Motors.MotorsConfiguration GetMotorsConfiguration() {
-		return new MotorsConfiguration(_config.Motors);
+	public MotorsSpatial.MotorsSpatialConfiguration GetMotorsSpatialConfiguration() {
+		return new MotorsSpatialConfiguration(_config.MotorsSpatial);
 	}
 
 	public SkinSerialPort.SerialConfiguration GetSerialConfiguration(){
@@ -63,11 +72,11 @@ public class UserConfigurationManager {
 			obs.ProcessingConfigurationUpdated(new ProcessingConfiguration(_config.Processing));
 	}
 
-	public void SetMotorsConfiguration(Motors.MotorsConfiguration conf) {
-		_config.Motors = conf;
+	public void SetMotorsSpatialConfiguration(MotorsSpatial.MotorsSpatialConfiguration conf) {
+		_config.MotorsSpatial = conf;
 
 		for(UserObserver obs : _observers)
-			obs.MotorsConfigurationUpdated(new MotorsConfiguration(_config.Motors));
+			obs.MotorsSpatialConfigurationUpdated(new MotorsSpatialConfiguration(_config.MotorsSpatial));
 	}
 
 	public void SetSerialConfiguration(SkinSerialPort.SerialConfiguration conf) {
@@ -82,6 +91,17 @@ public class UserConfigurationManager {
 		
 		for(UserObserver obs : _observers)
 			obs.MotorsTimeConfigurationUpdated(new MotorsTimeConfiguration(_config.MotorsTime));
+	}
+	
+	public Configuration GetConfiguration() {
+		return new Configuration(_config);
+	}
+	
+	public void SetConfiguration(Configuration config) {
+		SetSerialConfiguration(config.Serial != null ? config.Serial : new SerialConfiguration());
+		SetMotorsSpatialConfiguration(config.MotorsSpatial != null ? config.MotorsSpatial : new MotorsSpatialConfiguration());
+		SetProcessingConfiguration(config.Processing != null ? config.Processing : new ProcessingConfiguration());
+		SetMotorsTimeConfiguration(config.MotorsTime != null ? config.MotorsTime : new MotorsTimeConfiguration());
 	}
 
 	public void AddObserver(UserObserver obs) {
@@ -109,12 +129,7 @@ public class UserConfigurationManager {
 		ObjectInputStream ois = null;
 		try {
 			ois = new ObjectInputStream(new FileInputStream(f));
-			Configuration config = (Configuration) ois.readObject();
-			
-			SetSerialConfiguration(config.Serial != null ? config.Serial : new SerialConfiguration());
-			SetMotorsConfiguration(config.Motors != null ? config.Motors : new MotorsConfiguration());
-			SetProcessingConfiguration(config.Processing != null ? config.Processing : new ProcessingConfiguration());
-			SetMotorsTimeConfiguration(config.MotorsTime != null ? config.MotorsTime : new MotorsTimeConfiguration());
+			SetConfiguration((Configuration) ois.readObject());
 			
 		}catch (ClassNotFoundException e) {
 			e.printStackTrace();

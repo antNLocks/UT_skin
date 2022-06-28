@@ -27,7 +27,8 @@ import java.io.File;
 import java.io.IOException;
 
 import model.UserConfigurationManager;
-import model.Motors.MotorsConfiguration;
+import model.UserConfigurationManager.Configuration;
+import model.MotorsSpatial.MotorsSpatialConfiguration;
 import model.MotorsTime.MotorsTimeConfiguration;
 import model.SkinProcessor.ProcessingConfiguration;
 import model.SkinSerialPort.SerialConfiguration;
@@ -177,13 +178,13 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	};
 
 	private ChangeListener<Number> motorsConfigSliderListener = (observable, oldValue, newValue) -> {
-		MotorsConfiguration config = GetUserConfigManager().GetMotorsConfiguration();
+		MotorsSpatialConfiguration config = GetUserConfigManager().GetMotorsSpatialConfiguration();
 
 		config.DeviationGaussian = (int) gaussianDeviationSlider.getValue();
 		config.NormalisationFactorGaussian = (float) gaussianNormalisationFactorSlider.getValue();
 		config.SleepingTime = (long) sleepingTimeMotorsSpatialSlider.getValue();
 		
-		GetUserConfigManager().SetMotorsConfiguration(config);
+		GetUserConfigManager().SetMotorsSpatialConfiguration(config);
 	};
 	
 	private ChangeListener<Number> motorsTimeConfigSliderListener = (observable, oldValue, newValue) -> {
@@ -230,15 +231,15 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	
 	private ChangeListener<Number> resizeFacorSliderListener = (observable, oldValue, newValue) -> {
 		ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
-		MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
+		MotorsSpatialConfiguration motorsSpatialConfig = GetUserConfigManager().GetMotorsSpatialConfiguration();
 
 		processingConfig.ResizeFactorCol = (int) resizeFactorWidthSLider.getValue();
 		processingConfig.ResizeFactorRow = (int) resizeFactorHeightSLider.getValue();
-		motorsConfig.InputCol = processingConfig.ProcessedBufferCol();
-		motorsConfig.InputRow = processingConfig.ProcessedBufferRow();
+		motorsSpatialConfig.InputCol = processingConfig.ProcessedBufferCol();
+		motorsSpatialConfig.InputRow = processingConfig.ProcessedBufferRow();
 
 		GetUserConfigManager().SetProcessingConfiguration(processingConfig);
-		GetUserConfigManager().SetMotorsConfiguration(motorsConfig);			
+		GetUserConfigManager().SetMotorsSpatialConfiguration(motorsSpatialConfig);			
 	};
 	
 	public ConfigController(String fileArg) { _fileArg = fileArg;	}
@@ -306,7 +307,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				rawColTF, "^(\\d?){3}$", "^\\d{1,3}$", (newValue) -> {
 					SerialConfiguration serialConfig = GetUserConfigManager().GetSerialConfiguration();
 					ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
-					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
+					MotorsSpatialConfiguration motorsConfig = GetUserConfigManager().GetMotorsSpatialConfiguration();
 
 					processingConfig.RawBufferCol = Integer.parseInt(newValue);
 					serialConfig.BufferSize = processingConfig.RawBufferCol*processingConfig.RawBufferRow;
@@ -315,7 +316,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 					Platform.runLater(() -> {
 						GetUserConfigManager().SetSerialConfiguration(serialConfig);
 						GetUserConfigManager().SetProcessingConfiguration(processingConfig);
-						GetUserConfigManager().SetMotorsConfiguration(motorsConfig);
+						GetUserConfigManager().SetMotorsSpatialConfiguration(motorsConfig);
 					});
 				}));
 
@@ -330,7 +331,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				rawRowTF, "^(\\d?){3}$", "^\\d{1,3}$", (newValue) -> {
 					SerialConfiguration serialConfig = GetUserConfigManager().GetSerialConfiguration();
 					ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
-					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
+					MotorsSpatialConfiguration motorsConfig = GetUserConfigManager().GetMotorsSpatialConfiguration();
 
 					processingConfig.RawBufferRow = Integer.parseInt(newValue);
 					serialConfig.BufferSize = processingConfig.RawBufferCol*processingConfig.RawBufferRow;
@@ -339,7 +340,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 					Platform.runLater(() -> {
 						GetUserConfigManager().SetSerialConfiguration(serialConfig);
 						GetUserConfigManager().SetProcessingConfiguration(processingConfig);
-						GetUserConfigManager().SetMotorsConfiguration(motorsConfig);
+						GetUserConfigManager().SetMotorsSpatialConfiguration(motorsConfig);
 					});
 				}));
 
@@ -352,28 +353,28 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		motorsColTF.textProperty().addListener(new NumericTFListener(
 				motorsColTF, "^(\\d?){2}$", "^\\d{1,2}$", (newValue) -> {
-					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
+					MotorsSpatialConfiguration motorsConfig = GetUserConfigManager().GetMotorsSpatialConfiguration();
 					motorsConfig.OutputCol = Integer.parseInt(newValue);
-					Platform.runLater(() -> GetUserConfigManager().SetMotorsConfiguration(motorsConfig));
+					Platform.runLater(() -> GetUserConfigManager().SetMotorsSpatialConfiguration(motorsConfig));
 				}));
 
 		motorsColTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				motorsColTF.setText(Integer.toString(GetUserConfigManager().GetMotorsConfiguration().OutputCol));
+				motorsColTF.setText(Integer.toString(GetUserConfigManager().GetMotorsSpatialConfiguration().OutputCol));
 				motorsColTF.setStyle(VALID_STYLE);
 			}
 		});
 
 		motorsRowTF.textProperty().addListener(new NumericTFListener(
 				motorsRowTF, "^(\\d?){2}$", "^\\d{1,2}$", (newValue) -> {
-					MotorsConfiguration motorsConfig = GetUserConfigManager().GetMotorsConfiguration();
+					MotorsSpatialConfiguration motorsConfig = GetUserConfigManager().GetMotorsSpatialConfiguration();
 					motorsConfig.OutputRow = Integer.parseInt(newValue);
-					Platform.runLater(() -> GetUserConfigManager().SetMotorsConfiguration(motorsConfig));
+					Platform.runLater(() -> GetUserConfigManager().SetMotorsSpatialConfiguration(motorsConfig));
 				}));
 
 		motorsRowTF.focusedProperty().addListener((observable, oldValue, newValue) -> {
 			if(!newValue) {		
-				motorsRowTF.setText(Integer.toString(GetUserConfigManager().GetMotorsConfiguration().OutputRow));
+				motorsRowTF.setText(Integer.toString(GetUserConfigManager().GetMotorsSpatialConfiguration().OutputRow));
 				motorsRowTF.setStyle(VALID_STYLE);
 			}
 		});
@@ -392,33 +393,33 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	}
 
 	private void CreateNewConfigurationManager() {
-		ProcessingConfiguration _processingConfig;
-		MotorsConfiguration _motorsConfig;
-		SerialConfiguration _serialConfig;
+		Configuration config = new Configuration();
 		
 		if(_userConfigManagers.size() > 0) { //The user asked to render the current config and we create a new one
 			_userConfigManagersView.set(_userConfigManagersView.size() - 1, "Config " + COM.getValue());
 			configurationCB.setValue("Config " + COM.getValue());
 			
-			_processingConfig = new ProcessingConfiguration(GetUserConfigManager().GetProcessingConfiguration());
-			_motorsConfig = new MotorsConfiguration(GetUserConfigManager().GetMotorsConfiguration());
-			_serialConfig = new SerialConfiguration(GetUserConfigManager().GetSerialConfiguration());
+			UserConfigurationManager _userConfigManager = GetUserConfigManager();
+			
+			config.Processing = new ProcessingConfiguration(_userConfigManager.GetProcessingConfiguration());
+			config.MotorsSpatial = new MotorsSpatialConfiguration(_userConfigManager.GetMotorsSpatialConfiguration());
+			config.Serial = new SerialConfiguration(_userConfigManager.GetSerialConfiguration());
+			config.MotorsTime = new MotorsTimeConfiguration(_userConfigManager.GetMotorsTimeConfiguration());
 		}
 		else {
-			_processingConfig = new ProcessingConfiguration();
-			_motorsConfig = new MotorsConfiguration();
-			_motorsConfig.InputCol = _processingConfig.ProcessedBufferCol();
-			_motorsConfig.InputRow = _processingConfig.ProcessedBufferRow();
-			_serialConfig = new SerialConfiguration();
+			config.Processing = new ProcessingConfiguration();
+			config.MotorsSpatial = new MotorsSpatialConfiguration();
+			config.MotorsSpatial.InputCol = config.Processing.ProcessedBufferCol();
+			config.MotorsSpatial.InputRow = config.Processing.ProcessedBufferRow();
+			config.Serial = new SerialConfiguration();
+			config.MotorsTime = new MotorsTimeConfiguration();
 		}
 		
 		
 
 		UserConfigurationManager configManager = new UserConfigurationManager();
 
-		configManager.SetProcessingConfiguration(_processingConfig);
-		configManager.SetMotorsConfiguration(_motorsConfig);
-		configManager.SetSerialConfiguration(_serialConfig);
+		configManager.SetConfiguration(config);
 		configManager.AddObserver(this);
 
 		
@@ -435,7 +436,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	private void UpdateUI(UserConfigurationManager config) {
 		ProcessingConfigurationUpdated(config.GetProcessingConfiguration());
 		SerialConfigurationUpdated(config.GetSerialConfiguration());
-		MotorsConfigurationUpdated(config.GetMotorsConfiguration());
+		MotorsSpatialConfigurationUpdated(config.GetMotorsSpatialConfiguration());
 		MotorsTimeConfigurationUpdated(config.GetMotorsTimeConfiguration());
 	}
 
@@ -446,9 +447,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		RendererController _renderController = new RendererController("Renderer - "+ configManagerName,
 				_ports.indexOf(COM.getValue()),
-				GetUserConfigManager().GetProcessingConfiguration(),
-				GetUserConfigManager().GetMotorsConfiguration(),
-				GetUserConfigManager().GetSerialConfiguration(),
+				GetUserConfigManager().GetConfiguration(),
 				() -> {
 					if(configurationCB.getValue().equalsIgnoreCase(configManagerName)) {
 						configurationCB.setValue("New config");
@@ -567,7 +566,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 	}
 
 	@Override
-	public void MotorsConfigurationUpdated(model.Motors.MotorsConfiguration userConfig) {
+	public void MotorsSpatialConfigurationUpdated(model.MotorsSpatial.MotorsSpatialConfiguration userConfig) {
 		gaussianDeviationView.setText(Integer.toString(userConfig.DeviationGaussian));
 		gaussianDeviationSlider.setValue(userConfig.DeviationGaussian);
 
