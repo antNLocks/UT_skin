@@ -9,8 +9,8 @@ public class MotorsTime extends ThreadProcess {
 	public static class MotorsTimeConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
-		public int TrailingFrames = 10;
-		public long SleepingTime = 30;
+		public int TrailingFrames;
+		public long SleepingTime;
 		
 		public MotorsTimeConfiguration() {}
 		

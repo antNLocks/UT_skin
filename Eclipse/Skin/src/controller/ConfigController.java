@@ -127,7 +127,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	@FXML
 	private Label resizeFactorHeightView;
-	
+
 	@FXML
 	private Slider resizeFactorWidthSLider;
 
@@ -136,33 +136,35 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	@FXML
 	private RadioButton rollingAverageT;
-	
+
 	@FXML
 	private Slider sleepingTimeMotorsSpatialSlider;
-	
+
 	@FXML
 	private Label sleepingTimeMotorsSpatialView;
-	
+
 	@FXML
 	private Slider sleepingTimeMotorsTimeSlider;
-	
+
 	@FXML
 	private Label sleepingTimeMotorsTimeView;
-	
+
 	@FXML
 	private Slider sleepingTimeProcessingSlider;
-	
+
 	@FXML
 	private Label sleepingTimeProcessingView;
-	
+
 	@FXML
 	private Slider trailingFramesSlider;
-	
+
 	@FXML
 	private Label trailingFramesView;
 
 	private final String INVALID_STYLE = "-fx-text-box-border: #FF0000; -fx-focus-color: #FF0000;";
 	private final String VALID_STYLE = "-fx-text-box-border: #00FF00; -fx-focus-color: #00FF00;";
+
+	private boolean _updatingUI = false;
 
 
 	private ChangeListener<Number> processingConfigSliderListener = (observable, oldValue, newValue) -> {
@@ -174,7 +176,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		config.Noise_interpolationFactor = (float) interpolationFactorSlider.getValue();
 		config.SleepingTime = (long) sleepingTimeProcessingSlider.getValue();
 
-		GetUserConfigManager().SetProcessingConfiguration(config);
+		if(!_updatingUI)
+			GetUserConfigManager().SetProcessingConfiguration(config);
 	};
 
 	private ChangeListener<Number> motorsConfigSliderListener = (observable, oldValue, newValue) -> {
@@ -183,17 +186,19 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		config.DeviationGaussian = (int) gaussianDeviationSlider.getValue();
 		config.NormalisationFactorGaussian = (float) gaussianNormalisationFactorSlider.getValue();
 		config.SleepingTime = (long) sleepingTimeMotorsSpatialSlider.getValue();
-		
-		GetUserConfigManager().SetMotorsSpatialConfiguration(config);
+
+		if(!_updatingUI)
+			GetUserConfigManager().SetMotorsSpatialConfiguration(config);
 	};
-	
+
 	private ChangeListener<Number> motorsTimeConfigSliderListener = (observable, oldValue, newValue) -> {
 		MotorsTimeConfiguration config = GetUserConfigManager().GetMotorsTimeConfiguration();
 
 		config.TrailingFrames = (int) trailingFramesSlider.getValue();
 		config.SleepingTime = (long) sleepingTimeMotorsTimeSlider.getValue();
-		
-		GetUserConfigManager().SetMotorsTimeConfiguration(config);
+
+		if(!_updatingUI)
+			GetUserConfigManager().SetMotorsTimeConfiguration(config);
 	};
 
 	private class NumericTFListener implements ChangeListener<String> {
@@ -211,16 +216,18 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		@Override
 		public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-			if (!newValue.matches(_authorizedPattern)) //We don't allow unauthorized chars
-				Platform.runLater(() -> {
-					_tf.setText(oldValue);
-					_tf.positionCaret(oldValue.length());
-				}); 
-			else if(newValue.matches(_completePattern)) { //Complete string
-				_onComplete.accept(newValue);
-				Platform.runLater(()-> _tf.positionCaret(newValue.length()));
-			}else //In progress string
-				Platform.runLater(() -> _tf.setStyle(INVALID_STYLE));		
+			if(!_updatingUI) {
+				if (!newValue.matches(_authorizedPattern)) //We don't allow unauthorized chars
+					Platform.runLater(() -> {
+						_tf.setText(oldValue);
+						_tf.positionCaret(oldValue.length());
+					}); 
+				else if(newValue.matches(_completePattern)) { //Complete string
+					_onComplete.accept(newValue);
+					Platform.runLater(()-> _tf.positionCaret(newValue.length()));
+				}else //In progress string
+					Platform.runLater(() -> _tf.setStyle(INVALID_STYLE));		
+			}
 		}
 	};
 
@@ -228,7 +235,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		UpdateUI(GetUserConfigManager());
 		connectAndRender.setDisable(!configurationCB.getValue().equalsIgnoreCase("New Config"));
 	};
-	
+
 	private ChangeListener<Number> resizeFacorSliderListener = (observable, oldValue, newValue) -> {
 		ProcessingConfiguration processingConfig = GetUserConfigManager().GetProcessingConfiguration();
 		MotorsSpatialConfiguration motorsSpatialConfig = GetUserConfigManager().GetMotorsSpatialConfiguration();
@@ -238,10 +245,12 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		motorsSpatialConfig.InputCol = processingConfig.ProcessedBufferCol();
 		motorsSpatialConfig.InputRow = processingConfig.ProcessedBufferRow();
 
-		GetUserConfigManager().SetProcessingConfiguration(processingConfig);
-		GetUserConfigManager().SetMotorsSpatialConfiguration(motorsSpatialConfig);			
+		if(!_updatingUI) {
+			GetUserConfigManager().SetProcessingConfiguration(processingConfig);
+			GetUserConfigManager().SetMotorsSpatialConfiguration(motorsSpatialConfig);
+		}
 	};
-	
+
 	public ConfigController(String fileArg) { _fileArg = fileArg;	}
 
 	@FXML
@@ -256,7 +265,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		baudrateCB.setItems(FXCollections.observableArrayList(9600, 19200, 38400, 57600, 74880, 115200, 230400, 250000));
 
 		Bind();
-		
+
 		if(_fileArg != null) 
 			Platform.runLater(() -> Load(new File(_fileArg)));
 	}
@@ -272,7 +281,9 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		averageAlgo.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
 			ProcessingConfiguration config = GetUserConfigManager().GetProcessingConfiguration();
 			config.Noise_averageAlgo = rollingAverageT.isSelected() ? 0 : 1;
-			GetUserConfigManager().SetProcessingConfiguration(config);
+
+			if(!_updatingUI)
+				GetUserConfigManager().SetProcessingConfiguration(config);
 		});
 
 		resizeFactorWidthSLider.valueProperty().addListener(resizeFacorSliderListener);
@@ -280,7 +291,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		gaussianDeviationSlider.valueProperty().addListener(motorsConfigSliderListener);
 		gaussianNormalisationFactorSlider.valueProperty().addListener(motorsConfigSliderListener);
-		
+
 		trailingFramesSlider.valueProperty().addListener(motorsTimeConfigSliderListener);
 
 		frameSeparatorByteTF.textProperty().addListener(new NumericTFListener(
@@ -300,7 +311,8 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		baudrateCB.valueProperty().addListener((observable, oldValue, newValue) -> {
 			SerialConfiguration config = GetUserConfigManager().GetSerialConfiguration();
 			config.Baudrate = baudrateCB.getValue();
-			GetUserConfigManager().SetSerialConfiguration(config);
+			if(!_updatingUI)
+				GetUserConfigManager().SetSerialConfiguration(config);
 		});
 
 		rawColTF.textProperty().addListener(new NumericTFListener(
@@ -382,11 +394,12 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 		hardwareGainSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
 			SerialConfiguration config = GetUserConfigManager().GetSerialConfiguration();
 			config.HardwareGain = (int) hardwareGainSlider.getValue();
-			GetUserConfigManager().SetSerialConfiguration(config);
+			if(!_updatingUI)
+				GetUserConfigManager().SetSerialConfiguration(config);
 		});
 
 		configurationCB.valueProperty().addListener(configChangeListener);
-		
+
 		sleepingTimeMotorsSpatialSlider.valueProperty().addListener(motorsConfigSliderListener);
 		sleepingTimeProcessingSlider.valueProperty().addListener(processingConfigSliderListener);
 		sleepingTimeMotorsTimeSlider.valueProperty().addListener(motorsTimeConfigSliderListener);
@@ -394,13 +407,13 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 	private void CreateNewConfigurationManager() {
 		Configuration config = new Configuration();
-		
+
 		if(_userConfigManagers.size() > 0) { //The user asked to render the current config and we create a new one
 			_userConfigManagersView.set(_userConfigManagersView.size() - 1, "Config " + COM.getValue());
 			configurationCB.setValue("Config " + COM.getValue());
-			
+
 			UserConfigurationManager _userConfigManager = GetUserConfigManager();
-			
+
 			config.Processing = new ProcessingConfiguration(_userConfigManager.GetProcessingConfiguration());
 			config.MotorsSpatial = new MotorsSpatialConfiguration(_userConfigManager.GetMotorsSpatialConfiguration());
 			config.Serial = new SerialConfiguration(_userConfigManager.GetSerialConfiguration());
@@ -414,15 +427,15 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 			config.Serial = new SerialConfiguration();
 			config.MotorsTime = new MotorsTimeConfiguration();
 		}
-		
-		
+
+
 
 		UserConfigurationManager configManager = new UserConfigurationManager();
 
 		configManager.SetConfiguration(config);
 		configManager.AddObserver(this);
 
-		
+
 
 		_userConfigManagersView.add("New config");
 		_userConfigManagers.add(configManager);
@@ -508,7 +521,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 				new ExtensionFilter("All Files", "*.*"));
 		Load(fileChooser.showOpenDialog(Main.Stage));
 	}
-	
+
 	private void Load(File f) {
 		if (f != null)
 			try {
@@ -530,7 +543,9 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 
 	@Override
-	public void ProcessingConfigurationUpdated(model.SkinProcessor.ProcessingConfiguration userConfig) {		
+	public void ProcessingConfigurationUpdated(model.SkinProcessor.ProcessingConfiguration userConfig) {
+		_updatingUI = true;
+		
 		minThresholdView.setText(Integer.toString(userConfig.MinThreshold));
 		minThresholdSlider.setValue(userConfig.MinThreshold);
 
@@ -547,7 +562,7 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		resizeFactorWidthView.setText(Integer.toString(userConfig.ResizeFactorCol));
 		resizeFactorWidthSLider.setValue(userConfig.ResizeFactorCol);
-		
+
 		resizeFactorHeightView.setText(Integer.toString(userConfig.ResizeFactorRow));
 		resizeFactorHeightSLider.setValue(userConfig.ResizeFactorRow);
 
@@ -563,10 +578,14 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		sleepingTimeProcessingSlider.setValue(userConfig.SleepingTime);
 		sleepingTimeProcessingView.setText(Long.toString(userConfig.SleepingTime));
+		
+		_updatingUI = false;
 	}
 
 	@Override
 	public void MotorsSpatialConfigurationUpdated(model.MotorsSpatial.MotorsSpatialConfiguration userConfig) {
+		_updatingUI = true;
+
 		gaussianDeviationView.setText(Integer.toString(userConfig.DeviationGaussian));
 		gaussianDeviationSlider.setValue(userConfig.DeviationGaussian);
 
@@ -578,29 +597,39 @@ public class ConfigController implements UserConfigurationManager.UserObserver {
 
 		motorsRowTF.setText(Integer.toString(userConfig.OutputRow));
 		motorsRowTF.setStyle(VALID_STYLE);
-		
+
 		sleepingTimeMotorsSpatialSlider.setValue(userConfig.SleepingTime);
 		sleepingTimeMotorsSpatialView.setText(Long.toString(userConfig.SleepingTime));
+		
+		_updatingUI = false;
 	}
 
 
 
 	@Override
 	public void SerialConfigurationUpdated(model.SkinSerialPort.SerialConfiguration userConfig) {
+		_updatingUI = true;
+
 		frameSeparatorByteTF.setText(String.format("0x%02X", userConfig.ByteSeparator));
 		frameSeparatorByteTF.setStyle(VALID_STYLE);
 		baudrateCB.setValue(userConfig.Baudrate);
 
 		hardwareGainView.setText(Integer.toString(userConfig.HardwareGain));
 		hardwareGainSlider.setValue(userConfig.HardwareGain);
+		
+		_updatingUI = false;
 	}
 
 	@Override
 	public void MotorsTimeConfigurationUpdated(MotorsTimeConfiguration userConfig) {
+		_updatingUI = true;
+
 		trailingFramesSlider.setValue(userConfig.TrailingFrames);
 		trailingFramesView.setText(Integer.toString(userConfig.TrailingFrames));
-		
+
 		sleepingTimeMotorsTimeSlider.setValue(userConfig.SleepingTime);
 		sleepingTimeMotorsTimeView.setText(Long.toString(userConfig.SleepingTime));
+		
+		_updatingUI = false;
 	}
 }

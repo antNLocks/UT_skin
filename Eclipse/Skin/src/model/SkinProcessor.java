@@ -9,18 +9,18 @@ public class SkinProcessor extends ThreadProcess
 	public static class ProcessingConfiguration implements Serializable{
 		private static final long serialVersionUID = 1L;
 
-		public int MinThreshold = 50;
-		public int MaxThreshold = 255;
-		public int Noise_averageAlgo = 0;
-		public int Noise_framesForAverage = 3;
-		public float Noise_interpolationFactor = 0.1f;
-		public long SleepingTime = 10;
+		public int MinThreshold;
+		public int MaxThreshold;
+		public int Noise_averageAlgo;
+		public int Noise_framesForAverage;
+		public float Noise_interpolationFactor;
+		public long SleepingTime;
 
-		public  int ResizeFactorCol = 20;
-		public  int ResizeFactorRow = 20;
+		public  int ResizeFactorCol;
+		public  int ResizeFactorRow;
 
-		public int RawBufferCol = 10;
-		public int RawBufferRow = 20;
+		public int RawBufferCol;
+		public int RawBufferRow;
 		public int ProcessedBufferCol() { return RawBufferCol * ResizeFactorCol; }
 		public int ProcessedBufferRow() { return RawBufferRow * ResizeFactorRow; }
 

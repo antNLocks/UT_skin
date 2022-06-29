@@ -10,13 +10,13 @@ public class MotorsSpatial extends ThreadProcess
 
 		public int InputCol;
 		public int InputRow;
-		public int OutputCol = 4;
-		public int OutputRow = 3;
-		public int DeviationGaussian = 60;
-		public int DeviationUniform = 60;
-		public float NormalisationFactorGaussian = 1;
-		public float NormalisationFactorUniform = 1;
-		public long SleepingTime = 30;
+		public int OutputCol;
+		public int OutputRow;
+		public int DeviationGaussian;
+		public int DeviationUniform;
+		public float NormalisationFactorGaussian;
+		public float NormalisationFactorUniform;
+		public long SleepingTime;
 
 		public MotorsSpatialConfiguration() {}
 

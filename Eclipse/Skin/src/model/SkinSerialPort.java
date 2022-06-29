@@ -18,10 +18,10 @@ public class SkinSerialPort extends ThreadProcess
 
 		private static final long serialVersionUID = 1L;
 
-		public int BufferSize = 200;
-		public int ByteSeparator = 0x00;
-		public int Baudrate = 250000;
-		public int HardwareGain = 2;
+		public int BufferSize;
+		public int ByteSeparator;
+		public int Baudrate;
+		public int HardwareGain;
 
 		public SerialConfiguration(SerialConfiguration s) {
 			BufferSize = s.BufferSize;

@@ -178,15 +178,15 @@ public class RendererController implements UserConfigurationManager.UserObserver
 			_window.setScene(scene);
 
 			_window.setOnCloseRequest(e -> {
-				_motorsTime.StopThread();
-				_motorsSpatial.StopThread();
-				_skinProcessor.StopThread();
-				_skinSerialPort.StopThread();
 				if(_bhapticsServer != null)
 					try {
 						_bhapticsServer.close();
 					} catch (IOException e1) { e1.printStackTrace(); }
-
+				_motorsTime.StopThread();
+				_motorsSpatial.StopThread();
+				_skinProcessor.StopThread();
+				_skinSerialPort.StopThread();
+				
 				_onExit.run();
 			});
 
