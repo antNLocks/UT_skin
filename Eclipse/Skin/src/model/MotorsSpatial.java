@@ -37,7 +37,7 @@ public class MotorsSpatial extends ThreadProcess
 	public static class MemoryException extends Exception{	};
 
 	private MotorsSpatialConfiguration _motorsConfig;
-	
+
 
 	public AtomicReference<float[]> GaussianOutputBuffer = new AtomicReference<>();
 	public AtomicReference<float[]> UniformOutputBuffer = new AtomicReference<>();
@@ -46,7 +46,7 @@ public class MotorsSpatial extends ThreadProcess
 
 	public float[][] GaussianConvolBuffers;
 	public float[][] UniformAverageConvolBuffers;
-	
+
 
 	public MotorsSpatial(MotorsSpatialConfiguration motorsConfig)
 	{
@@ -55,27 +55,23 @@ public class MotorsSpatial extends ThreadProcess
 		ComputeGaussianConvolBuffers();
 		ComputeUniformAverageConvolBuffers();
 	}
-	
+
 	@Override
 	protected void Process() {
 		try {
 			CalculateGaussianOutput();
 			CalculateUniformAverageOutput();
 		} catch (Exception e) {/*The user changed the motor configuration while we were calculated motors output*/}
-		
+
 	}
-	
+
 	@Override
-	protected void Sleep() {
-		try {
-			Thread.sleep(_motorsConfig.SleepingTime);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	protected void Sleep() throws InterruptedException{
+		Thread.sleep(_motorsConfig.SleepingTime);
 		super.Sleep();
 	}
-	
-	
+
+
 	private void ComputeGaussianConvolBuffers()
 	{
 		GaussianConvolBuffers = new float[_motorsConfig.OutputCol * _motorsConfig.OutputRow][ _motorsConfig.InputCol * _motorsConfig.InputRow];
@@ -142,7 +138,7 @@ public class MotorsSpatial extends ThreadProcess
 
 				OutputBufferTmp[i] = Math.min(sum, 255);
 			}
-			
+
 			GaussianOutputBuffer.set(OutputBufferTmp);
 		}catch(Exception e) {throw new MemoryException();}
 
@@ -162,7 +158,7 @@ public class MotorsSpatial extends ThreadProcess
 
 				OutputBufferTmp[i] = Math.min(sum, 255);
 			}
-			
+
 			UniformOutputBuffer.set(OutputBufferTmp);
 		}catch(Exception e) {throw new MemoryException();}
 	}

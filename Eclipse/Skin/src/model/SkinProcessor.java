@@ -48,7 +48,7 @@ public class SkinProcessor extends ThreadProcess
 	public AtomicReference<float[]> ProcessedOutputBuffer = new AtomicReference<>();
 
 	public AtomicReference<float[]> RawInputBuffer = new AtomicReference<>();
-	
+
 	private ArrayDeque<float[]> _rawBuffers = new ArrayDeque<float[]>();
 
 
@@ -68,12 +68,8 @@ public class SkinProcessor extends ThreadProcess
 	}
 
 	@Override
-	protected void Sleep() {
-		try {
-			Thread.sleep(ProcessingConfig.SleepingTime);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	protected void Sleep() throws InterruptedException {
+		Thread.sleep(ProcessingConfig.SleepingTime);
 		super.Sleep();
 	}
 

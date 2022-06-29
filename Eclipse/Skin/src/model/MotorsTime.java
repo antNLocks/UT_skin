@@ -11,15 +11,15 @@ public class MotorsTime extends ThreadProcess {
 
 		public int TrailingFrames;
 		public long SleepingTime;
-		
+
 		public MotorsTimeConfiguration() {}
-		
+
 		public MotorsTimeConfiguration(MotorsTimeConfiguration m) {
 			TrailingFrames = m.TrailingFrames;
 			SleepingTime = m.SleepingTime;
 		}
-		
-		
+
+
 	}
 
 	public MotorsTimeConfiguration MotorsTimeConfig = new MotorsTimeConfiguration();
@@ -44,14 +44,10 @@ public class MotorsTime extends ThreadProcess {
 			TimeOutputBuffer.set(output);
 		}catch(Exception e) {}
 	}
-	
+
 	@Override
-	protected void Sleep() {
-		try {
-			Thread.sleep(MotorsTimeConfig.SleepingTime);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
+	protected void Sleep() throws InterruptedException {
+		Thread.sleep(MotorsTimeConfig.SleepingTime);
 		super.Sleep();
 	}
 

@@ -100,34 +100,63 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 	private FPSAnalyser _fpsDrawingAnalyser = new FPSAnalyser();
 
+	/**
+	 * Represent the progression of the processing of a new value coming from the sensor.
+	 * The idea is to interrupt the ThreadProcess doing the next process and stores the current progression of 
+	 * the processing in a byte variable.
+	 * 0bxxx1 means the first ThreadProcess has a new value which was not processed
+	 * 0bxx1x means the second ThreadProcess has processed the new value but the output was not processed
+	 * ...
+	 */
+	private volatile int _newValueProgression = 0b0000; 
+
 	public RendererController(String title, int COM, UserConfigurationManager.Configuration userConfig, Runnable onExit) {
 		_onExit = onExit;
 		LaunchWindow(title);
 
 		_skinSerialPort = new SkinSerialPort(COM, userConfig.Serial);
 		_skinSerialPort.Register(() -> {
-			if(_skinSerialPort.RawOutputBuffer.get() != null)
+			if(_skinSerialPort.RawOutputBuffer.get() != null) {
 				_inputRawBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						_skinSerialPort.RawOutputBuffer.get(), 
 						_processingConfig.ResizeFactorCol, _processingConfig.ResizeFactorRow,
-						_processingConfig.RawBufferCol, _processingConfig.RawBufferRow)); 
+						_processingConfig.RawBufferCol, _processingConfig.RawBufferRow));
+
+				_newValueProgression |= 0b1;
+				_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
+				_skinProcessor.WakeUpThread();
+			}
 		});
 
 		_skinProcessor = new SkinProcessor();
 		_skinProcessor.Register(() -> {
-			if(_skinProcessor.ProcessedOutputBuffer.get() != null)
+			if(_skinProcessor.ProcessedOutputBuffer.get() != null) {
 				_inputProcessedBufferRef.set(_skinProcessor.ProcessedOutputBuffer.get());
 
+				if((_newValueProgression & 0b1) != 0b0) {
+					_newValueProgression &= ~0b1; //The new value was processed
+					_newValueProgression |= 0b1 << 1;
+					_motorsSpatial.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());
+					_motorsSpatial.WakeUpThread();
+				}
+			}
 			_skinProcessor.RawInputBuffer.set(_skinSerialPort.RawOutputBuffer.get());
 		});
 
 		_motorsTime = new MotorsTime();
 		_motorsTime.Register(() -> {
-			if(_motorsTime.TimeOutputBuffer.get() != null) 
+			if(_motorsTime.TimeOutputBuffer.get() != null) {
 				_outputTimeBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						specialFunc(_motorsTime.TimeOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
-			_motorsTime.SpatialInputBuffer.set(_motorsSpatial.GaussianOutputBuffer.get());
+				if((_newValueProgression & (0b1 << 2)) != 0b0) {
+					_newValueProgression &= ~(0b1 << 2);
+					_newValueProgression |= 0b1 << 3; //Doesn't matter here but if we want to have a bigger series of ThreadProcess...
+				}
+			}
+			try {
+				_motorsTime.SpatialInputBuffer.set(_motorsSpatial.GaussianOutputBuffer.get());
+			} catch (NullPointerException e) {}
 		});
 
 		ProcessingConfigurationUpdated(userConfig.Processing);
@@ -186,7 +215,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				_motorsSpatial.StopThread();
 				_skinProcessor.StopThread();
 				_skinSerialPort.StopThread();
-				
+
 				_onExit.run();
 			});
 
@@ -204,7 +233,7 @@ public class RendererController implements UserConfigurationManager.UserObserver
 
 		for(int i = 0; i < inputBuffer.length; i++) {
 			float input = inputBuffer[i];
-			
+
 			if(input > 200)
 				outputBuffer[i] = input;
 
@@ -229,6 +258,12 @@ public class RendererController implements UserConfigurationManager.UserObserver
 				_outputSpatialBufferRef.set(NaiveInterpolation.ResizeBufferNearest(
 						specialFunc(_motorsSpatial.GaussianOutputBuffer.get()), _resizeFactorMotorsImageCol, _resizeFactorMotorsImageRow,  _motorsConfig.OutputCol, _motorsConfig.OutputRow));
 
+				if((_newValueProgression & (0b1 << 1)) != 0b0) {
+					_newValueProgression &= ~(0b1 << 1);
+					_newValueProgression |= 0b1 << 2;
+					_motorsTime.SpatialInputBuffer.set(_motorsSpatial.GaussianOutputBuffer.get());
+					_motorsTime.WakeUpThread();
+				}
 
 			} catch(NullPointerException e) {}
 			_motorsSpatial.InputBuffer.set(_skinProcessor.ProcessedOutputBuffer.get());

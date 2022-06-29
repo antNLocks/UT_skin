@@ -50,7 +50,9 @@ public abstract class ThreadProcess {
 			for(IProcessListener listener : listeners)
 				listener.ProcessUpdated();
 
-			Sleep();
+			try {
+				Sleep();
+			} catch (InterruptedException e) {/*Stop sleeping*/}
 		});
 
 		_processLoopThread.setDaemon(true);
@@ -61,6 +63,10 @@ public abstract class ThreadProcess {
 	public void StopThread()
 	{
 		_processLoopThread._threadRunning = false;
+	}
+	
+	public void WakeUpThread() {
+		_processLoopThread.interrupt();
 	}
 
 	public void Register(IProcessListener listener)
@@ -80,5 +86,5 @@ public abstract class ThreadProcess {
 
 	protected abstract void Process();
 
-	protected void Sleep() {}
+	protected void Sleep() throws InterruptedException {}
 }
