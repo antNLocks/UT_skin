@@ -4,6 +4,8 @@ using System.Net.Sockets;
 using Bhaptics.Tact;
 using System.Collections.Generic;
 using System.Threading;
+using System.IO.Ports;
+using System.Diagnostics;
 
 namespace BHapticsSkinServer
 {
@@ -14,10 +16,57 @@ namespace BHapticsSkinServer
         private static byte _durationFrame = 30;
         private static bool _isReceivingMotorMapping = false;
 
+        static SerialPort _serialPort;
+
+
         [Obsolete]
         public static int Main(String[] args)
         {
-            _player = new HapticPlayer("BHapticsSkinServerID", "BHapticsSkinServer");
+            //_player = new HapticPlayer("BHapticsSkinServerID", "BHapticsSkinServer");
+            
+            _serialPort = new SerialPort();
+
+            Console.WriteLine("Available Ports:");
+            foreach (string s in SerialPort.GetPortNames())
+            {
+                Console.WriteLine("   {0}", s);
+            }
+
+            Console.Write("Enter COM port value : ");
+            _serialPort.PortName = Console.ReadLine();
+            _serialPort.BaudRate = 115200;
+            _serialPort.Open();
+
+            
+
+            Thread readThread = new Thread(SerialRead);
+            readThread.Start();
+
+            while (true)
+            {
+                byte[] b0 = { 254 };
+                byte[] b1 = { 254 };
+                byte[] b2 = { 254 };
+                byte[] b3 = { 254 };
+                byte[] b4 = { 254 };
+                byte[] b5 = { 254 };
+                byte[] b6 = { 254 };
+                byte[] b7 = { 254 };
+
+                _serialPort.Write(b0, 0, 1);
+                _serialPort.Write(b1, 0, 1);
+                _serialPort.Write(b2, 0, 1);
+                _serialPort.Write(b3, 0, 1);
+                _serialPort.Write(b4, 0, 1);
+                _serialPort.Write(b5, 0, 1);
+                _serialPort.Write(b6, 0, 1);
+                _serialPort.Write(b7, 0, 1);
+
+
+                byte[] b = { 0xFF };
+                _serialPort.Write(b, 0, 1);
+            }
+
             StartListening();
 
             return 0;
@@ -80,14 +129,23 @@ namespace BHapticsSkinServer
             catch (Exception e) { Console.WriteLine(e.ToString()); }
         }
 
+        static int counter = 0;
         public static void BufferUpdate(List<byte> buffer)
         {
+
             List<DotPoint> points = new List<DotPoint>();
 
             for(int i = 0; i < buffer.Count; i++)
                 points.Add(new DotPoint(_motorsMapping[i], (int)(buffer[i] / 2.54f)));
 
-            _player.Submit("_", PositionType.VestBack, points, _durationFrame);
+            //_player.Submit("_", PositionType.VestBack, points, _durationFrame);
+
+                for (int i = 0; i < 12; i++)
+                {
+                    _serialPort.Write(buffer.ToArray(), 0, 8);
+                }
+                byte[] b = { 0xFF };
+                _serialPort.Write(b, 0, 1);
         }
 
         public static void ParseMotorsMapping(List<byte> buffer)
@@ -102,6 +160,19 @@ namespace BHapticsSkinServer
             }
             Console.WriteLine();
             _isReceivingMotorMapping = false;
+        }
+
+        public static void SerialRead()
+        {
+            while (true)
+            {
+                try
+                {
+                    string message = _serialPort.ReadLine();
+                    Console.WriteLine("[Vest] : " + message);
+                }
+                catch (TimeoutException) { }
+            }
         }
     }
 }

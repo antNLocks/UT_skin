@@ -35,3 +35,16 @@ C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\o
 C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.CopyComplete
 C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.exe
 C:\Users\Antoine\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.pdb
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\BHapticsSkinServer.exe.config
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\BHapticsSkinServer.exe
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\BHapticsSkinServer.pdb
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\Bhaptics.Tact.dll
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\bin\Debug\Bhaptics.Tact.pdb
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.AssemblyReference.cache
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.g.resources
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.Properties.Resources.resources
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.GenerateResource.cache
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.CoreCompileInputs.cache
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.csproj.CopyComplete
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.exe
+D:\Users\aLocks\Desktop\UT_skin\CSharp\BHapticsSkinServeur\BHapticsSkinServer\obj\Debug\BHapticsSkinServer.pdb

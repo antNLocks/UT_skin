@@ -11,12 +11,12 @@ import org.opencv.core.CvType;
 import org.opencv.core.Core;
 
 // =========== CONSTANTS ==================
-int     SKIN_COLS          = 3;
-int     SKIN_ROWS          = 1;
-int     SKIN_CELLS         = 3;
+int     SKIN_COLS          = 20;
+int     SKIN_ROWS          = 10;
+int     SKIN_CELLS         = 200;
 
 int     SERIAL_PORT        = 1; 
-int     SERIAL_RATE        = 230400;
+int     SERIAL_RATE        = 250000;
 
 int     DISPLAY_W          = 1200;
 int     DISPLAY_H          = 700;
@@ -27,7 +27,7 @@ Serial  skinPort;
 OpenCV opencv; // openCV object for interpolation
 
 
-int resizeFactor = 60;
+int resizeFactor = 5;
 Size finalSize = new Size(resizeFactor * SKIN_COLS, resizeFactor * SKIN_ROWS);
 
 

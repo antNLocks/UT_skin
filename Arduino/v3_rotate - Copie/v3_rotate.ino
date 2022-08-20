@@ -5,11 +5,11 @@
 #define framesToDrop 20
 #define framesForCalib 20
 
-#define Tx 21
-#define Rx 12
+#define Tx 20
+#define Rx 10
 
-const byte Rx_index[] = { 6, 0, 7, 1, 8, 2, 9, 10, 3, 4, 5, 11};
-const byte Tx_index[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}; 
+const byte Rx_index[] = { 6, 0, 7, 1, 8, 2, 9, 10, 3, 4};
+const byte Tx_index[] = {9, 19, 8, 18, 7, 17, 6, 16, 5, 15, 4, 14, 3, 13, 2, 12, 1, 11, 0, 10}; 
 
 
 Muca muca;
@@ -42,9 +42,9 @@ void loop() {
 void GetRaw() {
   if (muca.updated()) {
 
-    for (int i = 0; i < Tx; i++) {
-      for(int j = 0; j < Rx; j++){
-        int index = Tx_index[i] * NUM_RX + Rx_index[j];
+    for (int i = 0; i < Rx; i++) {
+      for(int j = Tx-1; j >= 0; j--){
+        int index = Tx_index[j] * NUM_RX + Rx_index[i];
         byte b = constrain((signed int) (muca.grid[index] - rawBufferCalibration[index]) / scaleFactor, 1, 255);
         Serial.write(b);
       }
