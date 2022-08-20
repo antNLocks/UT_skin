@@ -23,7 +23,7 @@
          <children>
             <Label layoutX="10.0" layoutY="4.0" text="Editable configuration :" textFill="#db4949" AnchorPane.topAnchor="12.0">
                <font>
-                  <Font name="System Bold" size="14.0" />
+                  <Font name="Arial Bold" size="12.0" />
                </font>
             </Label>
             <ChoiceBox fx:id="configurationCB" layoutX="174.0" layoutY="19.0" prefWidth="100.0" AnchorPane.bottomAnchor="10.0" AnchorPane.topAnchor="10.0" />
@@ -32,7 +32,7 @@
       </AnchorPane>
 		<Label layoutX="14.0" layoutY="81.0" text="Serial Communication">
 			<font>
-				<Font name="System Bold Italic" size="14.0" />
+				<Font name="Arial Bold Italic" size="14.0" />
 			</font>
 		</Label>
 		<Label layoutX="14.0" layoutY="124.0" text="Port :" />
@@ -46,7 +46,7 @@
 							<children>
 								<Label layoutX="14.0" layoutY="14.0" text="Value Range">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutX="10.0" layoutY="42.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -77,7 +77,7 @@
 										<Slider fx:id="maxThresholdSlider" blockIncrement="1.0" majorTickUnit="300.0" max="255.0" showTickLabels="true" value="255.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
 										<Label fx:id="minThresholdView" text="0" GridPane.columnIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<GridPane.margin>
 												<Insets bottom="7.0" />
@@ -85,7 +85,7 @@
 										</Label>
 										<Label fx:id="maxThresholdView" text="255" GridPane.columnIndex="1" GridPane.rowIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<padding>
 												<Insets bottom="7.0" />
@@ -96,7 +96,7 @@
 								<Separator layoutX="10.0" layoutY="113.0" prefWidth="200.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" />
 								<Label layoutX="14.0" layoutY="130.0" text="Noise Reduction">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutX="10.0" layoutY="160.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -115,12 +115,12 @@
 												<ToggleGroup fx:id="averageAlgo" />
 											</toggleGroup>
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 										</RadioButton>
 										<RadioButton fx:id="interpolationFactorT" mnemonicParsing="false" selected="true" text="Interpolation previous frame" toggleGroup="$averageAlgo" GridPane.columnIndex="2">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 										</RadioButton>
 									</children>
@@ -156,7 +156,7 @@
 										<Slider fx:id="interpolationFactorSlider" blockIncrement="0.01" majorTickUnit="300.0" max="1.0" showTickLabels="true" value="0.5" GridPane.columnIndex="2" GridPane.rowIndex="1" />
 										<Label fx:id="framesForAverageView" text="3" GridPane.columnIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<GridPane.margin>
 												<Insets />
@@ -167,7 +167,7 @@
 										</Label>
 										<Label fx:id="interpolationFactorView" text="0.5" GridPane.columnIndex="1" GridPane.rowIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<padding>
 												<Insets bottom="7.0" />
@@ -178,7 +178,7 @@
 								<Separator layoutX="89.0" layoutY="276.0" prefWidth="200.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" />
 								<Label layoutX="14.0" layoutY="295.0" text="Processed Signal Resolution">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutX="10.0" layoutY="325.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -203,7 +203,7 @@
 										<Slider fx:id="resizeFactorWidthSLider" blockIncrement="1.0" majorTickUnit="300.0" max="50.0" min="1.0" showTickLabels="true" value="20.0" GridPane.columnIndex="2" />
 										<Label fx:id="resizeFactorWidthView" text="20" GridPane.columnIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<GridPane.margin>
 												<Insets bottom="7.0" />
@@ -216,7 +216,7 @@
                               </Label>
                               <Label fx:id="resizeFactorHeightView" text="20" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                  <font>
-                                    <Font name="System Italic" size="12.0" />
+                                    <Font name="Arial Italic" size="10.0" />
                                  </font>
                               </Label>
                               <Slider fx:id="resizeFactorHeightSLider" blockIncrement="1.0" majorTickUnit="300.0" max="50.0" min="1.0" showTickLabels="true" value="20.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
@@ -236,12 +236,12 @@
 										<Label text="Processed signal resolution :" GridPane.rowIndex="1" />
 										<Label fx:id="rawResolutionView" text="12x21" GridPane.columnIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 										</Label>
 										<Label fx:id="processedResolutionView" text="240x420" GridPane.columnIndex="1" GridPane.rowIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 										</Label>
 									</children>
@@ -256,7 +256,7 @@
 							<children>
 								<Label layoutX="14.0" layoutY="14.0" text="Spatial Kernel Parameters">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutX="14.0" layoutY="42.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -286,7 +286,7 @@
 										<Slider fx:id="gaussianDeviationSlider" blockIncrement="1.0" majorTickUnit="300.0" max="300.0" showTickLabels="true" value="60.0" GridPane.columnIndex="2" />
 										<Label fx:id="gaussianDeviationView" text="60" GridPane.columnIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<GridPane.margin>
 												<Insets bottom="7.0" />
@@ -295,7 +295,7 @@
                               <Slider fx:id="gaussianNormalisationFactorSlider" blockIncrement="0.1" majorTickUnit="300.0" max="10.0" min="1.0" showTickLabels="true" value="1.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                               <Label fx:id="gaussianNormalisationFactorView" text="1" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                  <font>
-                                    <Font name="System Italic" size="12.0" />
+                                    <Font name="Arial Italic" size="10.0" />
                                  </font>
                               </Label>
 									</children>
@@ -303,7 +303,7 @@
 								<Separator layoutX="10.0" layoutY="113.0" prefWidth="200.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" />
 								<Label layoutX="14.0" layoutY="130.0" text="Time Parameter">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutY="160.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -327,7 +327,7 @@
 										<Slider fx:id="trailingFramesSlider" blockIncrement="1.0" majorTickUnit="300.0" max="200.0" min="1.0" showTickLabels="true" value="1.0" GridPane.columnIndex="2" />
 										<Label fx:id="trailingFramesView" text="1" GridPane.columnIndex="1">
 											<font>
-												<Font name="System Italic" size="12.0" />
+												<Font name="Arial Italic" size="10.0" />
 											</font>
 											<padding>
 												<Insets bottom="7.0" />
@@ -337,7 +337,7 @@
 								</GridPane>
                         <Label layoutX="10.0" layoutY="217.0" text="Motors Resolution">
                            <font>
-                              <Font name="System Bold Italic" size="14.0" />
+                              <Font name="Arial Bold Italic" size="14.0" />
                            </font>
                         </Label>
                         <GridPane layoutX="10.0" layoutY="244.0" prefHeight="60.0" prefWidth="100.0">
@@ -375,7 +375,7 @@
 							<children>
 								<Label layoutX="14.0" layoutY="14.0" text="Raw Signal Resolution">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutX="14.0" layoutY="41.0" prefHeight="60.0" prefWidth="100.0" AnchorPane.leftAnchor="10.0">
@@ -405,7 +405,7 @@
 								<Separator layoutX="10.0" layoutY="113.0" prefWidth="200.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" />
 								<Label layoutX="14.0" layoutY="130.0" text="Other">
 									<font>
-										<Font name="System Bold Italic" size="14.0" />
+										<Font name="Arial Bold Italic" size="14.0" />
 									</font>
 								</Label>
 								<GridPane layoutX="10.0" layoutY="160.0" prefHeight="60.0" prefWidth="210.0" AnchorPane.leftAnchor="10.0">
@@ -449,7 +449,7 @@
                               <Slider fx:id="hardwareGainSlider" blockIncrement="1.0" majorTickUnit="300.0" max="30.0" showTickLabels="true" value="2.0" GridPane.columnIndex="2" />
                               <Label fx:id="hardwareGainView" text="2" GridPane.columnIndex="1">
                                  <font>
-                                    <Font name="System Italic" size="12.0" />
+                                    <Font name="Arial Italic" size="10.0" />
                                  </font>
                                  <GridPane.margin>
                                     <Insets bottom="7.0" />
@@ -467,7 +467,7 @@
                      <children>
                         <Label layoutX="14.0" layoutY="14.0" text="Thread sleeping time">
                            <font>
-                              <Font name="System Bold Italic" size="14.0" />
+                              <Font name="Arial Bold Italic" size="14.0" />
                            </font>
                         </Label>
                         <GridPane layoutX="10.0" layoutY="42.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0">
@@ -499,7 +499,7 @@
                               <Slider fx:id="sleepingTimeMotorsSpatialSlider" blockIncrement="1.0" majorTickUnit="300.0" showTickLabels="true" value="5.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
                               <Label fx:id="sleepingTimeProcessingView" text="5" GridPane.columnIndex="1">
                                  <font>
-                                    <Font name="System Italic" size="12.0" />
+                                    <Font name="Arial Italic" size="10.0" />
                                  </font>
                                  <GridPane.margin>
                                     <Insets bottom="7.0" />
@@ -507,7 +507,7 @@
                               </Label>
                               <Label fx:id="sleepingTimeMotorsSpatialView" text="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
                                  <font>
-                                    <Font name="System Italic" size="12.0" />
+                                    <Font name="Arial Italic" size="10.0" />
                                  </font>
                                  <padding>
                                     <Insets bottom="7.0" />
@@ -516,7 +516,7 @@
                               <Label text="Motors Time thread (ms) :" GridPane.rowIndex="2" />
                               <Label fx:id="sleepingTimeMotorsTimeView" text="5" GridPane.columnIndex="1" GridPane.rowIndex="2">
                                  <font>
-                                    <Font name="System Italic" size="12.0" />
+                                    <Font name="Arial Italic" size="10.0" />
                                  </font>
                                  <padding>
                                     <Insets bottom="7.0" />
@@ -531,7 +531,7 @@
             </Tab>
 			</tabs>
 		</TabPane>
-      <Button layoutX="334.0" layoutY="661.0" mnemonicParsing="false" onAction="#onSaveConfig" text="Save config" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" />
-      <Button layoutX="216.0" layoutY="664.0" mnemonicParsing="false" onAction="#onLoadConfig" text="Load config" AnchorPane.bottomAnchor="10.666666666666629" />
+      <Button layoutX="334.0" layoutY="660.0" mnemonicParsing="false" onAction="#onSaveConfig" text="Save config" AnchorPane.bottomAnchor="10.0" AnchorPane.rightAnchor="10.0" />
+      <Button layoutX="210.0" layoutY="660.0" mnemonicParsing="false" onAction="#onLoadConfig" text="Load config" AnchorPane.bottomAnchor="10.0" />
 	</children>
 </AnchorPane>
