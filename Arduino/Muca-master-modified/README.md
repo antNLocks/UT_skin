@@ -15,7 +15,7 @@ https://www.arduino.cc/en/Guide/Libraries ("Importing a .zip Library")
 
 Connect the board following the tutorial on the [wiki](https://github.com/muca-board/Muca/wiki/Getting-started-with-Muca). 
 
-Run the example `Muca_Raw.ino`.  To display the results,  launch`Muca_Raw_Processing.pde`.
+Run the example `Muca_Raw.ino`.  To display the results,  launch `Muca_Raw_Processing.pde`.
 
 **Important**: On the processing file, don't forget to change `SERIAL_PORT` to your active board. 
 

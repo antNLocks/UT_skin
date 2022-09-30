@@ -1,25 +1,40 @@
 ﻿using System;
 using System.Net;
 using System.Net.Sockets;
-using Bhaptics.Tact;
 using System.Collections.Generic;
 using System.Threading;
+using System.IO.Ports;
 using System.Diagnostics;
 
 namespace BHapticsSkinServer
 {
     class Program
     {
-        private static IHapticPlayer _player;
         private static byte[] _motorsMapping = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 };
         private static byte _durationFrame = 30;
         private static bool _isReceivingMotorMapping = false;
 
+        static SerialPort _serialPort;
+
 
         [Obsolete]
         public static int Main(String[] args)
-        {
-            _player = new HapticPlayer("BHapticsSkinServerID", "BHapticsSkinServer");
+        {        
+            _serialPort = new SerialPort();
+
+            Console.WriteLine("Available Ports:");
+            foreach (string s in SerialPort.GetPortNames())
+            {
+                Console.WriteLine("   {0}", s);
+            }
+
+            Console.Write("Enter COM port value : ");
+            _serialPort.PortName = Console.ReadLine();
+            _serialPort.BaudRate = 115200;
+            _serialPort.Open();            
+
+            Thread readThread = new Thread(SerialRead);
+            readThread.Start();
 
             StartListening();
 
@@ -31,6 +46,7 @@ namespace BHapticsSkinServer
         {
             byte[] bytes = new Byte[1024]; // Data buffer for incoming data.  
 
+            // SkinAnalyser is configured to communicate through port 51470
             IPEndPoint localEndPoint = new IPEndPoint(IPAddress.Any, 51470);
             Socket listener = new Socket(IPAddress.Any.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
@@ -41,7 +57,7 @@ namespace BHapticsSkinServer
 
                 Console.WriteLine("Waiting for a connection on port 51470 ...");
 
-                while (true)
+                while (true) // Allows the client application to connect and disconnect as desired
                 {
                     Socket handler = listener.Accept(); // Waiting for an incoming connection
                     Console.WriteLine();
@@ -55,7 +71,7 @@ namespace BHapticsSkinServer
                             int bytesRec = handler.Receive(bytes);
                             for (int i = 0; i < bytesRec; i++)
                             {
-                                if (bytes[i] == 0xFF)
+                                if (bytes[i] == 0xFF) // End of frame byte
                                 {
                                     if (!_isReceivingMotorMapping)
                                     {
@@ -83,16 +99,16 @@ namespace BHapticsSkinServer
             catch (Exception e) { Console.WriteLine(e.ToString()); }
         }
 
-        static int counter = 0;
+
         public static void BufferUpdate(List<byte> buffer)
         {
-
-            List<DotPoint> points = new List<DotPoint>();
-
-            for(int i = 0; i < buffer.Count; i++)
-                points.Add(new DotPoint(_motorsMapping[i], (int)(buffer[i] / 2.54f)));
-
-            _player.Submit("_", PositionType.VestBack, points, _durationFrame);
+            for (int i = 0; i < 12; i++)
+            {
+                _serialPort.Write(buffer.ToArray(), 0, 8);
+            }
+            
+            byte[] b = { 0xFF };
+            _serialPort.Write(b, 0, 1);
         }
 
         public static void ParseMotorsMapping(List<byte> buffer)
@@ -101,12 +117,27 @@ namespace BHapticsSkinServer
             buffer.RemoveAt(0);
             _motorsMapping = buffer.ToArray();
             Console.Write("Duration of a frame : {0} ms\nNew motors mapping : ", _durationFrame);
+            
             foreach(var b in _motorsMapping)
             {
                 Console.Write("{0}, ", b);
             }
+           
             Console.WriteLine();
             _isReceivingMotorMapping = false;
+        }
+
+        public static void SerialRead()
+        {
+            while (true)
+            {
+                try
+                {
+                    string message = _serialPort.ReadLine();
+                    Console.WriteLine("[Vest] : " + message);
+                }
+                catch (TimeoutException) { }
+            }
         }
     }
 }

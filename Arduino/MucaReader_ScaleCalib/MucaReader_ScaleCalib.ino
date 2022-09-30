@@ -1,14 +1,10 @@
 #include <Muca.h>
 #include <EEPROM.h>
-
+#include "TxRxPinout.h"
 
 #define SKIN_CELLS NUM_TX * NUM_RX
 #define framesToDrop 20
 #define framesForCalib 20
-
-const byte Rx_index[] = { 0, 6, 1, 7, 2, 8, 3, 4, 9, 10 }; //10 Rx
-const byte Tx_index[] = { 19, 9, 18, 8, 17, 7, 16, 6, 15, 5, 14, 4, 13, 3, 12, 2, 11, 1, 10, 0 }; //20 Tx
-
 
 
 Muca muca;
@@ -35,34 +31,27 @@ void setup() {
   calib();
 
   EEPROM.get(scalePivotAddress, scalePivot);
-  EEPROM.get(scaleBufferAddress, scaleBufferCalibration);
-
- 
+  EEPROM.get(scaleBufferAddress, scaleBufferCalibration); 
 }
 
 
 void loop() {
-  GetRaw();
-}
+    if (muca.updated()) {
 
+        for (byte i = 0; i < Tx; i++) {
+          for (byte j = 0; j < Rx; j++) {
+            int index = Tx_index[i] * NUM_RX + Rx_index[j];
+            byte b = constrain(((unsigned int) constrain(((signed int) (muca.grid[index] - rawBufferCalibration[index]))/ scaleFactor,1, 255)) * scaleBufferCalibration[scalePivot] / scaleBufferCalibration[index], 1, 255);
+            Serial.write(b);
+          }
+        }
 
-void GetRaw() {
-  if (muca.updated()) {
-
-    for (byte i = 0; i < sizeof(Tx_index); i++) {
-      for (byte j = 0; j < sizeof(Rx_index); j++) {
-        int index = Tx_index[i] * NUM_RX + Rx_index[j];
-        byte b = constrain(((unsigned int) constrain(((signed int) (muca.grid[index] - rawBufferCalibration[index]))/ scaleFactor,1, 255)) * scaleBufferCalibration[scalePivot] / scaleBufferCalibration[index], 1, 255);
-        Serial.write(b);
+        Serial.write(0x00);
       }
-    }
-
-    Serial.write(0x00);
-  }
 }
+
 
 void calib() {
-
   for (int i = 0; i < SKIN_CELLS; i++)
     rawBufferCalibration[i] = 0;
 
@@ -72,7 +61,6 @@ void calib() {
     for (int i = 0; i < SKIN_CELLS; i++)
       rawBufferCalibration[i] += round(muca.grid[i] / (float) framesForCalib);
   }
-
 }
 
 
@@ -114,8 +102,6 @@ void scaleCalib() {
 
   EEPROM.put(scalePivotAddress, scalePivot);
   EEPROM.put(scaleBufferAddress, scaleBufferCalibration);
-
-
 }
 
 void serialEvent() {
