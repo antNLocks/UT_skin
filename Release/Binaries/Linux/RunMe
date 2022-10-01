@@ -5,3 +5,6 @@ java -jar --module-path skin_lib --add-modules=javafx.controls,javafx.fxml skin.
 
 # Unfortunately, text scaling issue
 
+# .\jdk-11.0.1\bin\java.exe -jar -D"com.sun.javafx.fontSize=1
+5" --module-path skin_lib --add-modules=javafx.controls,javafx.fxml skin.jar
+

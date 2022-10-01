@@ -1,0 +1,110 @@
+package model;
+
+public class NaiveInterpolation {
+
+	public static float[] ResizeBufferBilinear(float[] rawBuffer, int resizeFactorCol, int resizeFactorRow, int col, int row)
+	{
+		float[] result = new float[col * resizeFactorCol * row * resizeFactorRow];
+
+		float[][] result2d = new float[row * resizeFactorRow][col* resizeFactorCol];
+
+		float[][] colInter = new float [col][row * resizeFactorRow];
+
+		float[][] rawBuffer2d = new float[col][row];
+
+		for (int i = 0; i < col * row; i++)
+			rawBuffer2d[i % col][i / col] = rawBuffer[i];
+
+		for (int i = 0; i < col; i++)
+			colInter[i] = InterLinear(rawBuffer2d[i], resizeFactorRow);
+
+		float[][] colInterT = new float[row * resizeFactorRow][col];
+		for (int i = 0; i < colInterT.length; i++)
+			for (int j = 0; j < colInterT[i].length; j++)
+				colInterT[i][j] = colInter[j][i];
+
+		for (int i = 0; i < row * resizeFactorRow; i++)
+			result2d[i] = InterLinear(colInterT[i], resizeFactorCol);
+
+		for (int i = 0; i < result2d.length; i++)
+			for (int j = 0; j < result2d[i].length; j++)
+				result[i * result2d[i].length + j] = result2d[i][j];
+
+		return result;
+	}
+
+	private static float[] InterLinear(float[] column, int resizeFactor)
+	{
+		float[] result = new float[column.length * resizeFactor];
+
+		for (int i = 0; i < column.length - 1; i++)
+			for (int j = 0; j < resizeFactor; j++)
+			{
+				float t = j / (float)resizeFactor;
+				result[i * resizeFactor + resizeFactor / 2 + j] = (1 - t) * column[i] + t * column[i + 1];
+			}
+
+		for(int i = 0; i < resizeFactor; i++)
+		{
+			if(i < resizeFactor / 2)
+				result[i] = column[0];
+			else
+				result[(column.length - 1) * resizeFactor + i] = column[column.length - 1];
+		}
+		
+		return result;
+	}
+
+	public static float[] ResizeBufferNearest(float[] rawBuffer, int resizeFactorCol, int resizeFactorRow, int col, int row)
+	{
+		float[] result = new float[col * resizeFactorCol * row * resizeFactorRow];
+
+		float[][] result2d = new float[row * resizeFactorRow][col* resizeFactorCol];
+
+		float[][] colInter = new float [col][row * resizeFactorRow];
+
+		float[][] rawBuffer2d = new float[col][row];
+
+		for (int i = 0; i < col * row; i++)
+			rawBuffer2d[i % col][i / col] = rawBuffer[i];
+
+		for (int i = 0; i < col; i++)
+			colInter[i] = InterNearest(rawBuffer2d[i], resizeFactorRow);
+
+		float[][] colInterT = new float[row * resizeFactorRow][col];
+		for (int i = 0; i < colInterT.length; i++)
+			for (int j = 0; j < colInterT[i].length; j++)
+				colInterT[i][j] = colInter[j][i];
+
+		for (int i = 0; i < row * resizeFactorRow; i++)
+			result2d[i] = InterNearest(colInterT[i], resizeFactorCol);
+
+		for (int i = 0; i < result2d.length; i++)
+			for (int j = 0; j < result2d[i].length; j++)
+				result[i * result2d[i].length + j] = result2d[i][j];
+
+		return result;
+	}
+
+	private static float[] InterNearest(float[] column, int resizeFactor)
+	{
+		float[] result = new float[column.length * resizeFactor];
+
+		for (int i = 0; i < column.length - 1; i++)
+			for (int j = 0; j < resizeFactor; j++)
+			{
+				float t = j / (float)resizeFactor;
+				result[i * resizeFactor + resizeFactor / 2 + j] = t < 0.5 ? column[i] : column[i + 1];
+			}
+
+		for(int i = 0; i < resizeFactor; i++)
+		{
+			if(i < resizeFactor / 2)
+				result[i] = column[0];
+			else
+				result[(column.length - 1) * resizeFactor + i] = column[column.length - 1];
+
+		}
+		return result;
+	}
+}

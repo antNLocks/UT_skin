@@ -1,0 +1,36 @@
+.root{
+	-fx-font-size: 12px;
+	-fx-font-family: "my_Arial_";
+}
+
+.editable-conf{
+	-fx-font-size: 14px;
+	-fx-font-family: "my_Arial_ Bold";
+}
+
+.header{
+	-fx-font-size: 14px;
+	-fx-font-family: "my_Arial_ Bold Italic";
+	-fx-label-padding: 0 0 0 6;
+}
+
+.header-renderer{
+	-fx-label-padding: 0 0 0 0;
+}
+
+.value {
+	-fx-font-size: 11px;
+	-fx-font-family: "my_Arial_ Italic";
+}
+
+.value-radio-button {
+	-fx-label-padding: 0 0 0 2;
+}
+
+.sliderGridePane > Label {
+	-fx-label-padding: -15 0 0 0;
+}
+
+.sliderGridePane {
+	-fx-padding: 10 0 0 0;
+}

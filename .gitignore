@@ -59,5 +59,6 @@ sysinfo.txt
 crashlytics-build.properties
 
 # Large files
-Release/Binaries/jdk-11.0.1/
+/Release/Binaries/jdk-11.0.1/
+/Release
 

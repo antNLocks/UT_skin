@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="ASCII"?>
-<anttasks:AntTask xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:anttasks="http://org.eclipse.fx.ide.jdt/1.0" buildDirectory="${project}/build">
-  <deploy height="400" width="400" packagingFormat="none" verbose="true">
-    <application name="Skin" mainclass="Config" version="0" toolkit="fx"/>
-    <info title="Skin" vendor="Antoine LORENTZ"/>
-  </deploy>
-  <signjar/>
-</anttasks:AntTask>
