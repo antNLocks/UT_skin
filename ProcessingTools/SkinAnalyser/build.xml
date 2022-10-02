@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project SkinAnalyser">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    
+    <!--define folder properties-->
+    <property name="dir.buildfile" value="."/>
+    <property name="dir.workspace" value="${dir.buildfile}"/>
+    <property name="dir.jarfile" value="${dir.buildfile}"/>
+    
+    <target name='compile'>
+		<delete dir="${dir.workspace}/bin" />
+		<mkdir dir="${dir.workspace}/bin"/>
+	
+		<javac includeantruntime="false" source="1.8" target="1.8" srcdir="${dir.workspace}/src" destdir="${dir.workspace}/bin" encoding="Cp1252">
+			<classpath>
+				<fileset dir="${dir.workspace}/lib">
+					<include name="*"/>
+				</fileset>
+			</classpath>
+		</javac>
+	
+		<!-- Copy over none Java-Files -->
+		<copy todir="${dir.workspace}/bin">
+		<fileset dir="${dir.workspace}/res">
+			<exclude name="**/*.java"/>
+		</fileset>
+		<fileset dir="${dir.workspace}/src">
+			<exclude name="**/*.java"/>
+		</fileset>
+		</copy>
+	</target>
+    
+    <target name="create_run_jar" depends="compile">
+        <jar destfile="${dir.jarfile}/SkinAnalyser.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="application.Main"/>
+                <attribute name="Class-Path" value="."/>
+                <attribute name="Implementation-Vendor" value="Antoine LORENTZ"/>
+                <attribute name="Implementation-Title" value="SkinAnalyser"/>
+            </manifest>
+            <fileset dir="${dir.workspace}/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.workspace}/lib/jSerialComm.jar"/>
+        </jar>
+    </target>
+</project>

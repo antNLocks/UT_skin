@@ -104,8 +104,12 @@
                </padding>
             </Label>
             <Button layoutX="540.0" layoutY="6.0" mnemonicParsing="false" onAction="#onLaunchCalibration" text="Launch Calibration" AnchorPane.rightAnchor="10.0" />
-            <Button fx:id="connectToHapticServerBtn" layoutX="334.0" layoutY="6.0" mnemonicParsing="false" onAction="#onDisConnectToHapticServer" text="Send to HapticSkinServer" AnchorPane.rightAnchor="300.0" />
-            <Button layoutX="317.0" layoutY="6.0" mnemonicParsing="false" onAction="#onLaunchScaleCalibration" text="Launch Scale Calibration" AnchorPane.rightAnchor="140.0" />
+            <Button fx:id="connectToHapticServerBtn" layoutX="334.0" layoutY="6.0" mnemonicParsing="false" onAction="#onDisConnectToHapticServer" text="Send to HapticSkinServer" AnchorPane.rightAnchor="140.0" />
+
+            <!-- Feature not implemented on the MucaReader side
+            <Button layoutX="317.0" layoutY="6.0" mnemonicParsing="false" onAction="#onLaunchScaleCalibration" text="Launch Scale Calibration" AnchorPane.rightAnchor="300.0" />
+            -->
+
          </children>
       </AnchorPane>
    </children>
