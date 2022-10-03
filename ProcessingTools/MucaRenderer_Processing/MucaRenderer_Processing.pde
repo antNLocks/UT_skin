@@ -15,11 +15,11 @@ int     SKIN_COLS          = 12;
 int     SKIN_ROWS          = 21;
 int     SKIN_CELLS         = SKIN_COLS * SKIN_ROWS;
 
-int     SERIAL_PORT        = 1; 
+int     SERIAL_PORT        = 0; 
 int     SERIAL_RATE        = 250000;
 
-int     DISPLAY_W          = 1000;
-int     DISPLAY_H          = 700;
+int     DISPLAY_W          = 900;
+int     DISPLAY_H          = 600;
 
 
 // =========== VARIABLES ==================
@@ -27,7 +27,7 @@ Serial  skinPort;
 OpenCV opencv; // openCV object for interpolation
 
 
-int resizeFactor = 10;
+int resizeFactor = 20;
 Size finalSize = new Size(resizeFactor * SKIN_COLS, resizeFactor * SKIN_ROWS);
 
 

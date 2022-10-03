@@ -26,7 +26,8 @@ void InterfaceSetup() {
     ;
     
     for(int i = 0; i < Serial.list().length; i++){
-      rCon.addItem(Serial.list()[i], i);
+      if(!Serial.list()[i].startsWith("/dev/ttyS"))
+        rCon.addItem(Serial.list()[i], i);
     }
     
     rCon.activate(SERIAL_PORT);
