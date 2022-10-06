@@ -16,13 +16,13 @@ Two examples are proposed:
 Build :
 
 ```console
-foo@bar:~$ csc HapticSkinServer.cs
+csc HapticSkinServer.cs
 ```
 
 Run :
 
 ```console
-foo@bar:~$ mono HapticSkinServer.exe
+mono HapticSkinServer.exe
 ```
 
 This will work with `HapticSkinServer.cs` and `HapticVestSkinServer` but not with `BHapticsSkinServer` which is a Visual Studio solution.

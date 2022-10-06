@@ -35,11 +35,11 @@ Apache ANT 1.7 or higher is needed to build with the `build.xml` script.
 Build and deploy (with ant) : 
 
 ```console
-foo@bar:~$ ant
+ant
 ```
 
 Run (with Oracle jdk 8.202):
 
 ```console
-foo@bar:~$ java -jar SkinAnalyser.jar
+java -jar SkinAnalyser.jar
 ```
