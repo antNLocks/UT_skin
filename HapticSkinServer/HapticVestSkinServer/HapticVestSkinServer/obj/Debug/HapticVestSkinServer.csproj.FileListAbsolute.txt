@@ -1,6 +1,0 @@
-D:\Users\aLocks\Desktop\UT_skin\CSharp\HapticVestSkinServer\HapticVestSkinServer\obj\Debug\HapticVestSkinServer.csproj.AssemblyReference.cache
-D:\Users\aLocks\Desktop\UT_skin\CSharp\HapticVestSkinServer\HapticVestSkinServer\obj\Debug\HapticVestSkinServer.csproj.CoreCompileInputs.cache
-D:\Users\aLocks\Desktop\UT_skin\CSharp\HapticVestSkinServer\HapticVestSkinServer\bin\Debug\HapticVestSkinServer.exe
-D:\Users\aLocks\Desktop\UT_skin\CSharp\HapticVestSkinServer\HapticVestSkinServer\bin\Debug\HapticVestSkinServer.pdb
-D:\Users\aLocks\Desktop\UT_skin\CSharp\HapticVestSkinServer\HapticVestSkinServer\obj\Debug\HapticVestSkinServer.exe
-D:\Users\aLocks\Desktop\UT_skin\CSharp\HapticVestSkinServer\HapticVestSkinServer\obj\Debug\HapticVestSkinServer.pdb

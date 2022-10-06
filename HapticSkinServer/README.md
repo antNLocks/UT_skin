@@ -10,3 +10,19 @@ All that remains is to transmit intensities to the hardware that controls the mo
 Two examples are proposed: 
 * `BHapticsSkinServer` to control hardware provided by BHaptics. The *bHapticsPlayer* software is required
 * `HapticVestSkinServer` to control the vest prototyped by the UT
+
+## Build and run (mono)
+
+Build :
+
+```console
+foo@bar:~$ csc HapticSkinServer.cs
+```
+
+Run :
+
+```console
+foo@bar:~$ mono HapticSkinServer.exe
+```
+
+This will work with `HapticSkinServer.cs` and `HapticVestSkinServer` but not with `BHapticsSkinServer` which is a Visual Studio solution.
