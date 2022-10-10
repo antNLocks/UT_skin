@@ -43,3 +43,11 @@ Run (with Oracle jdk 8.202):
 ```console
 java -jar SkinAnalyser.jar
 ```
+
+### Configuration files (.noc)
+
+The `SkinAnalyser/config_files` folder contains *configuration* files. These files can be loaded with *SkinAnalyser*. Each file is linked to a specific prototype.
+
+**Warning**: pay attention to the **Frame Separator** byte. 
+
+If nothing happens when you try to render a configuration, it is probably because the `Raw signal` section is not set up correctly.
